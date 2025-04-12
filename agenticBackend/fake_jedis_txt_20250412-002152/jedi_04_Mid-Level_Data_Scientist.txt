@@ -1,0 +1,35 @@
+**Job Title:** Mid-Level Data Scientist
+**Company:** InfraData Corp
+**Location:** Berlin, Germany
+**Job Type:** Contract
+
+**About InfraData Corp:**
+InfraData Corp is a dynamic startup focused on leveraging AI to transform industries in the robotics sector. We offer a collaborative and fast-paced environment where you can make a real impact.
+
+**Role Summary:**
+We are seeking a talented and motivated Mid-Level Data Scientist to join our growing team. In this role, you will be responsible for researching and implementing state-of-the-art AI/ML solutions, with a potential focus on Reinforcement Learning.
+
+**Key Responsibilities:**
+*   Communicate findings, results, and technical details clearly to both technical and non-technical audiences.
+*   Stay current with the latest research papers and technological advancements in AI/ML.
+*   Stay current with the latest research papers and technological advancements in AI/ML.
+*   Develop and maintain robust data pipelines and MLOps infrastructure.
+*   Design, implement, and evaluate machine learning models for Feature Engineering.
+
+**Required Qualifications:**
+*   M.S./M.Tech in Robotics or a closely related quantitative field (e.g., Physics, Operations Research).
+*   2+ years of relevant industry experience in Machine Learning.
+*   Proficiency in at least one programming language such as Python.
+*   Hands-on experience with core ML libraries/frameworks.
+*   Solid understanding of fundamental machine learning algorithms and statistical concepts.
+*   Strong analytical and problem-solving skills.
+*   Excellent communication and teamwork abilities.
+
+**Preferred Qualifications:**
+*   Ph.D. or Ph.D. preferred.
+*   6+ years of experience.
+*   Experience or familiarity with SciPy.
+*   Experience or familiarity with Python.
+*   Experience or familiarity with XAI.
+*   Experience or familiarity with Tableau.
+*   Experience or familiarity with XGBoost.

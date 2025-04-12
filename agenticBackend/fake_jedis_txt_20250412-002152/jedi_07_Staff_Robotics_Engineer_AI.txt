@@ -1,0 +1,38 @@
+**Job Title:** Staff Robotics Engineer (AI)
+**Company:** Beta Analytics
+**Location:** Gurgaon, India
+**Job Type:** Full-time, Hybrid
+
+**About Beta Analytics:**
+Beta Analytics is a dynamic startup focused on leveraging AI to solve complex challenges in the SaaS sector. We offer a collaborative and fast-paced environment where you can make a real impact.
+
+**Role Summary:**
+We are seeking a talented and motivated Staff Robotics Engineer (AI) to join our growing team. In this role, you will be responsible for researching and implementing state-of-the-art AI/ML solutions, with a potential focus on NLP.
+
+**Key Responsibilities:**
+*   Collaborate effectively with product managers, software engineers, and other data scientists/researchers.
+*   Conduct experiments and A/B tests to validate hypotheses and improve model performance.
+*   Design, implement, and evaluate machine learning models for Signal Processing.
+*   Develop and maintain robust data pipelines and MLOps infrastructure.
+*   Stay current with the latest research papers and technological advancements in AI/ML.
+
+**Required Qualifications:**
+*   B.S./B.Tech in Statistics or a closely related quantitative field (e.g., Physics, Operations Research).
+*   1+ years of relevant industry experience in Machine Learning.
+*   Proficiency in at least one programming language such as Python.
+*   Hands-on experience with core ML libraries/frameworks (e.g., NLTK, spaCy).
+*   Solid understanding of fundamental machine learning algorithms and statistical concepts.
+*   Strong analytical and problem-solving skills.
+*   Excellent communication and teamwork abilities.
+
+**Preferred Qualifications:**
+*   M.S./M.Tech or Ph.D. preferred.
+*   4+ years of experience.
+*   Experience or familiarity with XAI.
+*   Experience or familiarity with NLP.
+*   Experience or familiarity with LLMs.
+*   Experience or familiarity with GitHub Actions.
+*   Experience or familiarity with JavaScript.
+*   Experience with cloud platforms (AWS, Azure, or GCP).
+*   Publications in top-tier AI/ML conferences or journals.
+*   Contributions to relevant open-source projects.
