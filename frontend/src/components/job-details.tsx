@@ -62,13 +62,13 @@ export function JobDetails({ totalApplicantCount, shortlistedCount, interviewCou
         </div>
 
         <div className="space-y-4">
-          <div>
+          {/* <div>
             <div className="flex justify-between mb-1">
               <span className="text-sm font-medium">Hiring Progress</span>
               <span className="text-sm text-gray-500">27%</span>
             </div>
             <Progress value={27} className="w-full h-2" />
-          </div>
+          </div> */}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
             <div className="bg-gray-50 p-3 rounded-md text-center">

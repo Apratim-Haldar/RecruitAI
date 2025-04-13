@@ -5,7 +5,7 @@ import dbConnect from './config/db.js';
 import dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
-  import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import Users from './models/Users.js'
 import jobRouter from './routes/jobRoutes.js';
 import Applications from './models/Applications.js';
@@ -27,7 +27,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173','http://127.0.0.1:8080/ask'],
   credentials: true
 }));
 const PORT = process.env.PORT || 3000;
@@ -40,6 +40,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here';
 const HR_SECRET_CODE = process.env.HR_SECRET || 'COMPANY_HR_CODE_123';
 
 app.use("/api/job-routes", jobRouter);
+
 
 app.post('/api/signup', async (req, res) => {
   try {
@@ -180,6 +181,9 @@ app.get("/api/public/job-posts/:id", async (req, res) => {
 });
 
 // Add to existing routes
+// ... existing code ...
+
+// Update the apply route to handle duplicate applications
 app.post('/api/apply', async (req, res) => {
   try {
     const applicationData = {
@@ -192,12 +196,23 @@ app.post('/api/apply', async (req, res) => {
     res.json(application);
   } catch (error) {
     console.error('Application submission error:', error);
+    
+    // Check if this is a duplicate key error
+    if (error.code === 11000 && error.keyPattern && error.keyPattern.email && error.keyPattern.jobPost) {
+      return res.status(400).json({ 
+        error: "You have already applied for this position",
+        isDuplicate: true
+      });
+    }
+    
     res.status(400).json({ 
       error: error.message,
       details: error.errors // Mongoose validation details
     });
   }
 });
+
+// ... rest of the code ...
 
 app.get('/api/s3-presigned-url', async (req, res) => {
   const { fileName, fileType } = req.query;
@@ -235,7 +250,7 @@ app.get('/api/applications/:jobId', authenticateHR, async (req, res) => {
 
 app.put('/api/applications/:applicationId/:status', authenticateHR, async (req, res) => {
   try {
-    const { status } = req.params;
+    const { applicationId, status } = req.params;
     const application = await Applications.findByIdAndUpdate(
       req.params.applicationId,
       { status },
@@ -257,10 +272,12 @@ app.put('/api/applications/:applicationId/:status', authenticateHR, async (req, 
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 
-app.get('/api/get-pdfFile', async (req, res) => {
+app.get('/api/get-pdfFile/:key', async (req, res) => {
+  const key = req.params.key;
+  
   const params = {
-    Bucket: 'genai-job-applications',
-    Key: 'resumes/1744444924642_Apratim_Haldar_CV.pdf'
+    Bucket: process.env.S3_BUCKET || 'genai-job-applications',
+    Key: key
   };
   
   try {
@@ -279,6 +296,8 @@ app.get('/api/get-pdfFile', async (req, res) => {
     });
   }
 });
+
+
 
 // Start the Express server
 app.listen(5000, () => {

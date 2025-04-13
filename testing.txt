@@ -1,0 +1,19 @@
+# --- Use the REAL IDs ---
+$realAppId = "67fadca54d918ed1d0dcdd5b"
+$realJobId = "67f963bbd06a5483257dbff5"
+
+# ------------------------
+
+$pythonServiceUrl = "http://localhost:5002"
+
+# Define the request body
+$requestBody = @{
+    applicationId = $realAppId
+    jobPostId     = $realJobId
+} | ConvertTo-Json
+
+# Test Rating Application using Invoke-WebRequest
+Invoke-WebRequest -Uri "$pythonServiceUrl/api/v1/rate-application" `
+                  -Method POST `
+                  -ContentType "application/json" `
+                  -Body $requestBody

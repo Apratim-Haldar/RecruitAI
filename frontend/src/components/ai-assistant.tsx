@@ -1,10 +1,10 @@
-"use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Bot, Send, User, Sparkles, ChevronDown, ChevronUp } from "lucide-react"
+import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
 
 export function AiAssistant() {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -15,27 +15,35 @@ export function AiAssistant() {
     },
   ])
   const [inputValue, setInputValue] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return
 
-    // Add user message
-    setMessages([...messages, { role: "user", content: inputValue }])
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponses = [
-        "I can help analyze this candidate's profile. Their skills in React and TypeScript are a strong match for the position.",
-        "Based on their experience, this candidate would be a good fit for the Senior Frontend Developer role. Would you like me to suggest some interview questions?",
-        "I've analyzed their resume and found they have 5 years of relevant experience, which meets our requirements.",
-        "Their technical assessment scores are above average compared to other candidates for this position.",
-      ]
-
-      const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)]
-      setMessages((prev) => [...prev, { role: "assistant", content: randomResponse }])
-    }, 1000)
-
+    setMessages(prev => [...prev, { role: "user", content: inputValue }])
     setInputValue("")
+    setIsTyping(true)
+
+    try {
+      const response = await fetch('http://127.0.0.1:8080/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: inputValue })
+      })
+
+      const data = await response.json()
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: data.answer }
+      ])
+    } catch (error) {
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: "**Error:** Could not connect to AI service" }
+      ])
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   const handleKeyDown = (e) => {
@@ -77,7 +85,11 @@ export function AiAssistant() {
                     message.role === "user" ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {message.content}
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
                 </div>
                 {message.role === "user" && (
                   <Avatar className="h-8 w-8 mt-1">
@@ -88,6 +100,23 @@ export function AiAssistant() {
                 )}
               </div>
             ))}
+            {isTyping && (
+              <div className="flex items-center gap-2 justify-start">
+                <Avatar className="h-8 w-8 mt-1">
+                  <AvatarFallback className="bg-purple-100 text-purple-600">
+                    <Bot className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex items-center gap-2 text-sm text-gray-500 px-4">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                  </div>
+                  <span>Analyzing...</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -98,8 +127,17 @@ export function AiAssistant() {
               onKeyDown={handleKeyDown}
               className="flex-1"
             />
-            <Button size="icon" onClick={handleSendMessage} className="bg-purple-600 hover:bg-purple-700">
-              <Send className="h-4 w-4" />
+            <Button
+              size="icon"
+              onClick={handleSendMessage}
+              className="bg-purple-600 hover:bg-purple-700"
+              disabled={isTyping}
+            >
+              {isTyping ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </>
@@ -113,7 +151,7 @@ export function AiAssistant() {
           <div className="grid grid-cols-1 gap-2">
             <Button variant="outline" size="sm" className="justify-start text-left" onClick={() => setIsExpanded(true)}>
               <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
-              Analyze this candidate's profile
+              Analyze a candidate's profile
             </Button>
             <Button variant="outline" size="sm" className="justify-start text-left" onClick={() => setIsExpanded(true)}>
               <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
@@ -121,7 +159,7 @@ export function AiAssistant() {
             </Button>
             <Button variant="outline" size="sm" className="justify-start text-left" onClick={() => setIsExpanded(true)}>
               <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
-              Compare with other candidates
+              Compare multiple candidates
             </Button>
           </div>
         </div>
@@ -129,4 +167,3 @@ export function AiAssistant() {
     </div>
   )
 }
-

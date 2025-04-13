@@ -16,7 +16,7 @@ export default function ApplicationForm({ jobId, onSuccess }: ApplicationFormPro
   } = useForm();
   const [countrySearch, setCountrySearch] = useState('');
   const [selectedCode, setSelectedCode] = useState('+91');
-
+  const [submitError, setSubmitError] = useState('');
   const sortedCountries = countries.allCountries.sort((a, b) => a.name.localeCompare(b.name));
   const filteredCountries = sortedCountries.filter(c => 
     c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
@@ -38,10 +38,11 @@ export default function ApplicationForm({ jobId, onSuccess }: ApplicationFormPro
 
   const onSubmit = async (formData: any) => {
     try {
+      setSubmitError('');
       const s3Key = await uploadResume(formData.resume[0]);
       const fullPhone = `${selectedCode} ${formData.phone.replace(/[-\s]/g, '')}`;
       
-      await axios.post('http://localhost:5000/api/apply', {
+      const response = await axios.post('http://localhost:5000/api/apply', {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.toLowerCase().trim(),
@@ -51,9 +52,16 @@ export default function ApplicationForm({ jobId, onSuccess }: ApplicationFormPro
         immediateJoiner: Boolean(formData.immediateJoiner),
         experience: Number(formData.experience)
       });
+      
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Application failed:', error);
+      
+      if (error.response?.data?.isDuplicate) {
+        setSubmitError('You have already applied for this position');
+      } else {
+        setSubmitError('Failed to submit application. Please try again.');
+      }
     }
   };
 

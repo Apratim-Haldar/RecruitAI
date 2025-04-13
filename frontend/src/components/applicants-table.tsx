@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,13 +8,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Check, X, Star, Filter, Search, Calendar, RotateCcw } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Check, X, Filter, Search, Calendar, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CandidateModal } from "@/components/candidate-modal";
 import { applicantType } from "@/lib";
-import mongoose from "mongoose";
 import Modal from "./modal";
 
 interface Props {
@@ -110,7 +108,6 @@ export function ApplicantsTable({ applications, loading, reload }: Props) {
               <TableHead>Candidate</TableHead>
               <TableHead>Applied On</TableHead>
               <TableHead>Experience</TableHead>
-              <TableHead>Skills</TableHead>
               <TableHead>Match</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -148,9 +145,6 @@ export function ApplicantsTable({ applications, loading, reload }: Props) {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center"></div>
-                </TableCell>
-                <TableCell>
                   <div className="flex items-center">
                     <span
                       className={`font-medium ${
@@ -161,7 +155,7 @@ export function ApplicantsTable({ applications, loading, reload }: Props) {
                           : "text-gray-600"
                       }`}
                     >
-                      {/* {applicant.match}% */}
+                      {applicant.aiEvaluation.score} %
                     </span>
                   </div>
                 </TableCell>

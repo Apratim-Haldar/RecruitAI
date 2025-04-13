@@ -110,7 +110,6 @@ export function ShortlistedTable({ shortlistedData, reload }: Props) {
               <TableHead>Applied On</TableHead>
               {/* <TableHead>Shortlisted On</TableHead> */}
               <TableHead>Experience</TableHead>
-              <TableHead>Skills</TableHead>
               <TableHead>Match</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -145,8 +144,8 @@ export function ShortlistedTable({ shortlistedData, reload }: Props) {
                 </TableCell>
                 {/* <TableCell>{applicant.shortlistedDate}</TableCell> */}
                 <TableCell>{applicant.experience} years</TableCell>
-                <TableCell>
-                  {/* <div className="flex flex-wrap gap-1">
+                {/* <TableCell>
+                   <div className="flex flex-wrap gap-1">
                     {applicant.skills.slice(0, 2).map((skill, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
                         {skill}
@@ -157,8 +156,8 @@ export function ShortlistedTable({ shortlistedData, reload }: Props) {
                         +{applicant.skills.length - 2}
                       </Badge>
                     )}
-                  </div> */}
-                </TableCell> 
+                  </div> 
+                </TableCell>  */}
                 
                 <TableCell>
                   <div className="flex items-center">

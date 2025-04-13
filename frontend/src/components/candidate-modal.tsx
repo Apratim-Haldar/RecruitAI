@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,15 +18,63 @@ import {
   MessageSquare,
   X,
   Star,
+  Loader2,
+  Download
 } from "lucide-react"
 
 export function CandidateModal({ isOpen, onClose, candidate }) {
   const [activeTab, setActiveTab] = useState("profile")
   const [newNote, setNewNote] = useState("")
-  const [notes, setNotes] = useState(candidate?.notes || [])
+  const [notes, setNotes] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState("")
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false)
+
+  useEffect(() => {
+    // Reset state when candidate changes
+    if (candidate) {
+      setNotes(candidate.notes || [])
+    }
+  }, [candidate])
+
+  useEffect(() => {
+    // Reset PDF URL when modal closes
+    if (!isOpen) {
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl)
+        setPdfUrl("")
+      }
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    // Load PDF when resume tab is selected and we have a file key
+    if (activeTab === "resume" && candidate?.s3FileKey && !pdfUrl) {
+      loadPdfPreview()
+    }
+  }, [activeTab, candidate])
 
   if (!candidate) return null
+
+  const loadPdfPreview = async () => {
+    if (!candidate.s3FileKey) return
+    
+    setIsLoadingPdf(true)
+    try {
+      // Fetch the PDF as a blob
+      const response = await axios.get(`http://localhost:5000/api/get-pdfFile/${encodeURIComponent(candidate.s3FileKey)}`, {
+        responseType: 'blob'
+      })
+      
+      // Create a URL for the blob
+      const url = URL.createObjectURL(response.data)
+      setPdfUrl(url)
+    } catch (error) {
+      console.error("Failed to load PDF:", error)
+    } finally {
+      setIsLoadingPdf(false)
+    }
+  }
 
   const addNote = async () => {
     if (!newNote.trim()) return
@@ -49,9 +97,19 @@ export function CandidateModal({ isOpen, onClose, candidate }) {
   }
 
   const viewResume = () => {
-    if (candidate.s3FileKey) {
-      window.open(`https://${process.env.S3_BUCKET}.s3.amazonaws.com/${candidate.s3FileKey}`, '_blank')
-    }
+    window.open(`http://localhost:5000/api/get-pdfFile/${encodeURIComponent(candidate.s3FileKey)}`, '_blank')
+  }
+
+  const downloadResume = () => {
+    if (!candidate.s3FileKey) return
+    
+    // Create a temporary anchor element
+    const link = document.createElement('a')
+    link.href = `http://localhost:5000/api/get-pdfFile/${encodeURIComponent(candidate.s3FileKey)}`
+    link.download = `${candidate.firstName || 'candidate'}_${candidate.lastName || ''}_resume.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
@@ -61,11 +119,11 @@ export function CandidateModal({ isOpen, onClose, candidate }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 font-semibold text-3xl w-16">
-                <AvatarFallback>{candidate.firstName?.charAt(0)}{candidate.lastName?.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{candidate.firstName?.charAt(0) || ""}{candidate.lastName?.charAt(0) || ""}</AvatarFallback>
               </Avatar>
               <div>
-                <DialogTitle className="text-2xl font-bold">{candidate.firstName} {candidate.lastName}</DialogTitle>
-                {candidate.experience && (
+                <DialogTitle className="text-2xl font-bold">{candidate.firstName || ""} {candidate.lastName || ""}</DialogTitle>
+                {candidate.experience !== undefined && (
                   <div className="text-black mt-1">{candidate.experience} years experience</div>
                 )}
               </div>
@@ -92,7 +150,7 @@ export function CandidateModal({ isOpen, onClose, candidate }) {
           <TabsList className="grid grid-cols-3 mb-6">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="resume">Resume</TabsTrigger>
-            <TabsTrigger value="notes">Notes</TabsTrigger>
+            {/* <TabsTrigger value="notes">Notes</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
@@ -121,14 +179,19 @@ export function CandidateModal({ isOpen, onClose, candidate }) {
                     )}
                   </div>
                 </div>
-
+                {candidate.aiEvaluation.aiAnalysis.overall_analysis && (
+                  <div>
+                  <h3 className="font-medium mb-3">Overall Analysis</h3>
+                  <div className="list-disc pl-5 space-y-1">
+                    {candidate.aiEvaluation.aiAnalysis.overall_analysis}
+                  </div>
+                </div>  )}
+                
                 {candidate.aiEvaluation?.strengths && candidate.aiEvaluation?.strengths.length > 0 && (
                   <div>
                     <h3 className="font-medium mb-3">Strengths</h3>
                     <ul className="list-disc pl-5 space-y-1">
-                      {candidate.aiEvaluation.strengths.map((strength, index) => (
-                        <li key={index} className="text-gray-700">{strength}</li>
-                      ))}
+                      {candidate.aiEvaluation.aiAnalysis.detailed_strengths}
                     </ul>
                   </div>
                 )}
@@ -137,9 +200,7 @@ export function CandidateModal({ isOpen, onClose, candidate }) {
                   <div>
                     <h3 className="font-medium mb-3">Areas for Improvement</h3>
                     <ul className="list-disc pl-5 space-y-1">
-                      {candidate.aiEvaluation.weaknesses.map((weakness, index) => (
-                        <li key={index} className="text-gray-700">{weakness}</li>
-                      ))}
+                      {candidate.aiEvaluation.aiAnalysis.detailed_weaknesses}
                     </ul>
                   </div>
                 )}
@@ -204,23 +265,52 @@ export function CandidateModal({ isOpen, onClose, candidate }) {
 
           <TabsContent value="resume">
             <div className="bg-gray-50 p-6 rounded-lg min-h-[400px] flex flex-col items-center justify-center">
-              <FileText className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="font-medium text-lg mb-2">Resume Preview</h3>
-              <p className="text-gray-500 mb-4 text-center max-w-md">
-                {candidate.s3FileKey 
-                  ? "View the candidate's full resume to get a comprehensive understanding of their experience and qualifications."
-                  : "No resume available for this candidate."}
-              </p>
-              {candidate.s3FileKey && (
-                <Button onClick={viewResume}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  View Full Resume
-                </Button>
+              {isLoadingPdf ? (
+                <div className="flex flex-col items-center justify-center h-[500px]">
+                  <Loader2 className="h-8 w-8 text-gray-400 animate-spin mb-4" />
+                  <p className="text-gray-500">Loading resume...</p>
+                </div>
+              ) : pdfUrl ? (
+                <div className="w-full">
+                  <div className="flex justify-end mb-2 gap-2">
+                    <Button onClick={viewResume} variant="outline" size="sm">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Open in New Tab
+                    </Button>
+                    <Button onClick={downloadResume} variant="default" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                  <div className="w-full h-[500px] border border-gray-200 rounded-md overflow-hidden">
+                    <iframe 
+                      src={pdfUrl} 
+                      className="w-full h-full border-0" 
+                      title="Resume Preview"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <FileText className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="font-medium text-lg mb-2">Resume Preview</h3>
+                  <p className="text-gray-500 mb-4 text-center max-w-md">
+                    {candidate.s3FileKey 
+                      ? "View the candidate's full resume to get a comprehensive understanding of their experience and qualifications."
+                      : "No resume available for this candidate."}
+                  </p>
+                  {candidate.s3FileKey && (
+                    <Button onClick={loadPdfPreview}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Download Resume
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </TabsContent>
 
-          <TabsContent value="notes">
+          {/* <TabsContent value="notes">
             <div className="space-y-6">
               <div>
                 <h3 className="font-medium mb-3">Interview Notes</h3>
@@ -266,7 +356,7 @@ export function CandidateModal({ isOpen, onClose, candidate }) {
                 </div>
               </div>
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
 
         <DialogFooter className="flex justify-between items-center border-t pt-4 mt-4">

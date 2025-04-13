@@ -37,16 +37,8 @@ const applicationSchema = new mongoose.Schema({
   offerLetter: { type: Boolean, default: false },
   appliedAt: { type: Date, default: Date.now },
   immediateJoiner: { type: Boolean, default: false },
-  aiEvaluation: {
-    score: Number,
-    matchPercentage: Number,
-    strengths: [String],
-    weaknesses: [String],
-  },
   notes: {type:[String] ,default:[], required: false},
 });
-
-applicationSchema.index({ candidate: 1, jobPost: 1 }, { unique: true });
 
 const Applications = mongoose.model("Applications", applicationSchema);
 
