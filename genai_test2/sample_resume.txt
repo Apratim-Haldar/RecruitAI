@@ -1,0 +1,5 @@
+John Sample
+Software Developer
+
+Skills: Python, Java, SQL
+Experience: 3 years at Tech Solutions Inc.

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Job Details - {{ job.title }}{% endblock %}
+
+{% block content %}
+  {# --- Display Job Information --- #}
+  <h2>{{ job.title }} <small class="text-muted">(ID: {{ job.job_id }})</small></h2>
+  <hr>
+  <h4>Description</h4>
+  <p>{{ job.description_text | nl2br | safe if job.description_text else 'No description provided.' }}</p>
+
+  {% if structured_jd %}
+    <h4>Key Details (AI Structured)</h4>
+    <ul class="list-unstyled">
+      <li><strong>Required Skills:</strong> {{ structured_jd.required_skills | join(', ') if structured_jd.required_skills else 'N/A' }}</li>
+      <li><strong>Preferred Skills:</strong> {{ structured_jd.preferred_skills | join(', ') if structured_jd.preferred_skills else 'N/A' }}</li>
+      <li><strong>Experience Required:</strong> {{ structured_jd.required_experience_years }} {{ 'years' if structured_jd.required_experience_years else 'N/A' }}</li>
+      <li><strong>Education Required:</strong> {{ structured_jd.required_education if structured_jd.required_education else 'N/A' }}</li>
+    </ul>
+  {% endif %}
+  <hr>
+
+  {# --- Display Suitability Check Results if available --- #}
+   <h4><span class="badge bg-info-subtle border border-info-subtle text-info-emphasis rounded-pill">Optional: AI Suitability Check</span></h4>
+    {% if error %}
+        <div class="alert alert-danger mt-3" role="alert">
+          <h5 class="alert-heading">Analysis Error</h5>
+           {{ error }}
+        </div>
+    {% elif rating_result %}
+         <div class="alert alert-secondary mt-3">
+            <h5 class="alert-heading">Your Suitability Assessment:</h5>
+            {# --- Display 5-Star Rating --- #}
+            {% set star_rating = rating_result.rating | to_5_star %}
+            {% if star_rating is not none %}
+              <p class="fs-5">
+                <strong>Overall Rating:</strong>
+                <span class="badge text-bg-primary ms-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill me-1" viewBox="0 0 16 16" style="margin-bottom: 2px;"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                  {{ star_rating }} / 5.00
+                </span>
+                 <small class="text-muted ms-1"> (Original Score: {{ rating_result.rating }}/100)</small>
+              </p>
+            {% else %}
+               <p>Rating could not be calculated.</p>
+            {% endif %}
+            {# --- End 5-Star Rating Display --- #}
+
+            {% if rating_result.summary %}
+            <p class="mt-3"><strong>Summary:</strong> {{ rating_result.summary }}</p>
+            {% endif %}
+            <hr>
+            <div class="row">
+            <div class="col-md-6 mb-3">
+                <h6><span class="badge bg-success-subtle text-success-emphasis rounded-pill"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg me-1" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>What Fits</span></h6>
+                {% if rating_result.fits %} <ul class="list-group list-group-flush"> {% for item in rating_result.fits %} <li class="list-group-item bg-transparent border-0 px-0 py-1">{{ item }}</li> {% endfor %} </ul> {% else %} <p class="text-body-secondary fst-italic small">N/A</p> {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <h6><span class="badge bg-danger-subtle text-danger-emphasis rounded-pill"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg me-1" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>What's Lacking</span></h6>
+                {% if rating_result.lacks %} <ul class="list-group list-group-flush"> {% for item in rating_result.lacks %} <li class="list-group-item bg-transparent border-0 px-0 py-1">{{ item }}</li> {% endfor %} </ul> {% else %} <p class="text-body-secondary fst-italic small">N/A</p> {% endif %}
+            </div>
+            </div>
+        </div>
+    {% else %}
+        {# Form for suitability check #}
+         <form action="{{ url_for('check_suitability', job_id=job.job_id) }}" method="post" enctype="multipart/form-data" class="mt-3 border p-3 rounded bg-light">
+            <p class="form-text">Upload your resume here first to get an AI suitability score (optional).</p>
+            <div class="mb-3">
+                <label for="resume_check" class="form-label visually-hidden">Resume for Check:</label>
+                <input type="file" class="form-control form-control-sm" id="resume_check" name="resume" accept=".pdf,.doc,.docx,.txt" required>
+            </div>
+            <button type="submit" class="btn btn-info btn-sm">Check Suitability</button>
+        </form>
+    {% endif %} {# End suitability check/result display #}
+
+    <hr class="my-4">
+
+    {# --- Apply Now Form --- #}
+    <h4>Apply Now</h4>
+    <form action="{{ url_for('apply_for_job', job_id=job.job_id) }}" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="applicant_name" class="form-label">Your Name:</label>
+            <input type="text" class="form-control" id="applicant_name" name="applicant_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="applicant_email" class="form-label">Your Email (Used as unique ID):</label>
+            <input type="email" class="form-control" id="applicant_email" name="applicant_email" required>
+        </div>
+        <div class="mb-3">
+            <label for="resume_apply" class="form-label">Upload Resume for Application:</label>
+            <input type="file" class="form-control" id="resume_apply" name="resume_apply" accept=".pdf,.doc,.docx,.txt" required>
+            <div class="form-text">(Allowed types: .pdf, .doc, .docx, .txt)</div>
+        </div>
+        <button type="submit" class="btn btn-success btn-lg">Submit Application</button>
+    </form>
+
+
+  <hr class="my-4">
+  <a href="{{ url_for('list_jobs') }}" class="btn btn-outline-secondary btn-sm">« Back to Job Listings</a>
+
+{% endblock %}

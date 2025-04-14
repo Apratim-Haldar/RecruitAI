@@ -1,0 +1,38 @@
+**Job Title:** Senior AI Consultant
+**Company:** Nexus Data Co.
+**Location:** Hyderabad, India
+**Job Type:** Contract
+
+**About Nexus Data Co.:**
+Nexus Data Co. is a dynamic startup focused on leveraging AI to transform industries in the finance sector. We offer a collaborative and fast-paced environment where you can make a real impact.
+
+**Role Summary:**
+We are seeking a talented and motivated Senior AI Consultant to join our growing team. In this role, you will be responsible for designing, developing, and deploying state-of-the-art AI/ML solutions, with a potential focus on Data Warehousing.
+
+**Key Responsibilities:**
+*   Stay current with the latest research papers and technological advancements in AI/ML.
+*   Communicate findings, results, and technical details clearly to both technical and non-technical audiences.
+*   Design, implement, and evaluate machine learning models for Signal Processing.
+*   Conduct experiments and A/B tests to validate hypotheses and improve model performance.
+*   Process, clean, and analyze large-scale datasets using tools like Redis and Scala.
+
+**Required Qualifications:**
+*   B.S./B.Tech in Computer Eng or a closely related quantitative field (e.g., Physics, Operations Research).
+*   Strong portfolio showcasing relevant projects (academic, personal, internships) in AI/ML.
+*   Proficiency in at least one programming language such as Python.
+*   Hands-on experience with core ML libraries/frameworks (e.g., NumPy).
+*   Solid understanding of fundamental machine learning algorithms and statistical concepts.
+*   Strong analytical and problem-solving skills.
+*   Excellent communication and teamwork abilities.
+
+**Preferred Qualifications:**
+*   M.S./M.Tech or Ph.D. preferred.
+*   5+ years of experience.
+*   Experience or familiarity with NLP.
+*   Experience or familiarity with Tableau.
+*   Experience or familiarity with CatBoost.
+*   Experience or familiarity with Reinforcement Learning.
+*   Experience or familiarity with SciPy.
+*   Publications in top-tier AI/ML conferences or journals.
+*   Contributions to relevant open-source projects.
+*   Experience working in an Agile development environment.

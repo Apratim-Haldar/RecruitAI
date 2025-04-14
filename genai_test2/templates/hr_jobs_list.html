@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Jobs{% endblock %}
+
+{% block content %}
+  <h2>Manage Job Postings</h2>
+   <a href="{{ url_for('hr_create_job_form') }}" class="btn btn-success mb-3">Create New Job Posting</a>
+  <hr>
+  {% if jobs %}
+    {% for job in jobs %}
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start flex-wrap"> {# Added flex-wrap #}
+             <div> {# Group title and ID #}
+                <h5 class="card-title mb-1">{{ job.title }} (ID: {{ job.job_id }})</h5>
+             </div>
+             <div class="d-flex align-items-center"> {# Group badges #}
+                 {# Show Job Status Badge #}
+                 <span class="badge ms-2 order-3 order-sm-1 {# Changed order for smaller screens #}
+                      {% if job.job_status == 'open' %} bg-success
+                      {% elif job.job_status == 'closed' %} bg-warning text-dark
+                      {% elif job.job_status == 'filled' %} bg-secondary
+                      {% else %} bg-light text-dark border {% endif %}">
+                      Status: {{ job.job_status | capitalize if job.job_status else 'Unknown' }}
+                  </span>
+                  {# NEW: Show Analysis Preference Badge #}
+                  <span class="badge text-bg-info ms-2 order-2" data-bs-toggle="tooltip"
+                        title="{% if job.analysis_preference == 'scheduled' %}Scheduled daily around {{ job.analysis_schedule }}{% elif job.analysis_preference == 'batch' %}Batch analysis every {{ job.analysis_batch_size }} unrated{% else %}Manual analysis only{% endif %}">
+                    AI Analysis: {{ job.analysis_preference | capitalize }}
+                     {% if job.analysis_preference == 'scheduled' %} ({{ job.analysis_schedule }}){% endif %}
+                     {% if job.analysis_preference == 'batch' %} (Batch: {{ job.analysis_batch_size }}){% endif %}
+                  </span>
+             </div>
+          </div>
+          <p class="card-text mt-2">{{ job.description_text[:200] ~ '...' if job.description_text and job.description_text|length > 200 else job.description_text }}</p>
+          {# Link to view ALL applicants for this job #}
+          <a href="{{ url_for('hr_view_applicants', job_id=job.job_id) }}" class="btn btn-info me-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill me-1" viewBox="0 0 16 16"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/></svg>
+            View Applicants
+          </a>
+          {# Link to view Ranked applicants #}
+          <a href="{{ url_for('hr_view_ranked_applicants', job_id=job.job_id) }}" class="btn btn-warning">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trophy-fill me-1" viewBox="0 0 16 16"><path d="M2.5.5A.5.5 0 0 1 3 .5h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5 1 .5.5 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935zm10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.886-.72 3.935"/></svg>
+            View Top Ranked (AI)
+          </a>
+          {# NEW: Re-open Job Button #}
+          {% if job.job_status in ['closed', 'filled'] %}
+             <form action="{{ url_for('reopen_job', job_id=job.job_id) }}" method="post" class="d-inline ms-2" onsubmit="return confirm('Are you sure you want to re-open this job listing? Applicants will be able to apply again.');">
+                <button type="submit" class="btn btn-outline-success btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192L10.77 2.308a.25.25 0 0 1 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>
+                    Re-open Job
+                </button>
+             </form>
+          {% endif %}
+          {# TODO: Add Edit/Delete buttons later #}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No job postings found. <a href="{{ url_for('hr_create_job_form') }}">Create one?</a></p>
+  {% endif %}
+    <hr>
+  <a href="{{ url_for('hr_dashboard') }}">« Back to HR Dashboard</a>
+
+  {# Initialize tooltips if not already done in base #}
+   <script>
+       const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+       const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+   </script>
+
+{% endblock %}

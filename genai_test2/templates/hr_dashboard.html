@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}HR Dashboard{% endblock %}
+
+{% block content %}
+  <h2>HR / Company Dashboard</h2>
+  <hr>
+  <p>Manage job postings and applicants.</p>
+  <a href="{{ url_for('hr_list_jobs') }}" class="btn btn-primary">View Posted Jobs</a>
+  <a href="{{ url_for('hr_create_job_form') }}" class="btn btn-success">Create New Job Posting</a>
+{% endblock %}

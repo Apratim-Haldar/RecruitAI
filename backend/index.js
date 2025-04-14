@@ -13,7 +13,7 @@ import Applications from './models/Applications.js';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-
+import fetch from 'node-fetch';
 // Configure S3 client
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -106,7 +106,7 @@ app.get('/api/verify-auth', async (req, res) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await Users.findById(decoded.id);
-    res.json({ role: user.role });
+    res.json({ role: user.role, user:user });
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' });
   }
@@ -129,6 +129,50 @@ const authenticateHR = async (req, res, next) => {
   }
 };
 
+app.post("/api/upload-pdf", authenticateHR, async (req, res) => {
+  try {
+    // Get the multipart form data from the request
+    if (!req.files || !req.files.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    
+    const pdfFile = req.files.file;
+    
+    // Check if it's a PDF
+    if (!pdfFile.name.endsWith('.pdf')) {
+      return res.status(400).json({ error: "File must be a PDF" });
+    }
+    
+    // Create a FormData object to send to the Python service
+    const formData = new FormData();
+    formData.append('file', pdfFile.data, {
+      filename: pdfFile.name,
+      contentType: 'application/pdf'
+    });
+    
+    // Add the user ID to the request
+    const userId = req.user._id.toString();
+    
+    // Call the Python service
+    const pythonResponse = await fetch(`http://localhost:8080/upload?user_id=${userId}`, {
+      method: 'POST',
+      body: formData
+    });
+    
+    // Get the response from the Python service
+    const data = await pythonResponse.json();
+    
+    if (!pythonResponse.ok) {
+      throw new Error(data.detail || "Failed to process PDF");
+    }
+    
+    // Return the response to the frontend
+    res.json(data);
+  } catch (error) {
+    console.error("Error uploading PDF:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // Update create-job-post route to use auth middleware
 app.post("/api/create-job-post", authenticateHR, async (req, res) => {
   try {
@@ -152,13 +196,97 @@ app.post("/api/create-job-post", authenticateHR, async (req, res) => {
 app.get("/api/get-job-posts", authenticateHR, async (req, res) => {
   try {
     const response = await JobPosts.find({ createdBy: req.user._id });
-    res.json(response);
+    const response2 = await JobPosts.find({ createdBy: req.user._id, status: 'open' });
+    // Fix: Use an object to return both responses
+    res.json({ response, response2 });
   }
   catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
+app.get('/api/hr/applications-summary', authenticateHR, async (req, res) => {
+  try {
+    // First get all job posts created by this HR
+    const hrJobs = await JobPosts.find({ createdBy: req.user._id });
+    
+    // Extract job IDs
+    const jobIds = hrJobs.map(job => job._id);
+    
+    // Get all applications for these jobs
+    const allApplications = await Applications.find({ jobPost: { $in: jobIds } });
+    
+    // Get shortlisted applications
+    const shortlistedApplications = allApplications.filter(app => app.status === 'shortlisted');
+    
+    // Get applications with interview dates
+    const interviewApplications = allApplications.filter(app => app.interviewDate != null);
+    
+    // Get applications with offer letters
+    const offerApplications = allApplications.filter(app => app.offerLetter === true);
+    
+    res.json({
+      totalJobs: hrJobs.length,
+      totalApplications: allApplications.length,
+      totalShortlisted: shortlistedApplications.length,
+      totalInterviews: interviewApplications.length,
+      totalOffers: offerApplications.length
+    });
+  } catch (error) {
+    console.error('Error fetching application summary:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+// Route to reopen a job post
+app.put("/api/reopen-job/:jobId", authenticateHR, async (req, res) => {
+  try {
+    const jobId = req.params.jobId;
+    
+    // Find the job and verify it belongs to this HR
+    const job = await JobPosts.findOne({ 
+      _id: jobId,
+      createdBy: req.user._id 
+    });
+    
+    if (!job) {
+      return res.status(404).json({ error: "Job not found or unauthorized" });
+    }
+    
+    // Update the job status to open
+    job.status = "open";
+    await job.save();
+    
+    res.json({ success: true, job });
+  } catch (e) {
+    console.error("Error reopening job:", e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put("/api/close-job/:jobId", authenticateHR, async (req, res) => {
+  try {
+    const jobId = req.params.jobId;
+    
+    // Find the job and verify it belongs to this HR
+    const job = await JobPosts.findOne({ 
+      _id: jobId,
+      createdBy: req.user._id 
+    });
+    
+    if (!job) {
+      return res.status(404).json({ error: "Job not found or unauthorized" });
+    }
+    
+    // Update the job status to closed
+    job.status = "closed";
+    await job.save();
+    
+    res.json({ success: true, job });
+  } catch (e) {
+    console.error("Error closing job:", e);
+    res.status(500).json({ error: e.message });
+  }
+});
 // Keep public job posts for landing page
 app.get("/api/public/job-posts", async (req, res) => {
   try {

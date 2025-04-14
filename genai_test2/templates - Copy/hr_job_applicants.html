@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}Applicants for {{ job_title }} ({{ job_id }}){% endblock %}
+
+{% block content %}
+  <h2>
+      Applicants for {{ job_title }} <small class="text-muted">({{ job_id }})</small>
+      {# Show Job Status #}
+      <span class="badge fs-6 ms-2
+          {% if job_status == 'open' %} bg-success
+          {% elif job_status == 'closed' %} bg-warning text-dark
+          {% elif job_status == 'filled' %} bg-secondary
+          {% else %} bg-light text-dark border {% endif %}">
+          Job Status: {{ job_status | capitalize if job_status else 'Unknown' }}
+      </span>
+  </h2>
+
+  {# --- Filter Form --- #}
+  <div class="card bg-light my-3">
+    <div class="card-body">
+      <h5 class="card-title">Filter & Rank Top Applicants</h5>
+      <form action="{{ url_for('hr_filter_relevant_applicants', job_id=job_id) }}" method="post" class="row g-3 align-items-center">
+        <div class="col-auto"><label for="top_m" class="col-form-label">Show Top</label></div>
+        <div class="col-auto"><input type="number" id="top_m" name="top_m" class="form-control form-control-sm" value="5" min="1" style="width: 80px;"></div>
+        <div class="col-auto"><label for="top_m" class="col-form-label">most relevant applicants:</label></div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary btn-sm" {% if job_status != 'open' %}disabled title="Job is not open"{% endif %}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel-fill me-1" viewBox="0 0 16 16"><path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5z"/></svg>
+                Filter & Rank Now
+            </button>
+        </div>
+      </form>
+      <div class="form-text mt-1">This rates all unrated non-rejected applicants first, then shows the top M based on AI rating.</div>
+    </div>
+  </div>
+
+  {# --- View Toggles & Finalize --- #}
+   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+       <div> {# Group view toggles #}
+           <a href="{{ url_for('hr_view_ranked_applicants', job_id=job_id) }}" class="btn btn-warning btn-sm me-2">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trophy-fill me-1" viewBox="0 0 16 16"><path d="M2.5.5A.5.5 0 0 1 3 .5h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5 1 .5.5 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935zm10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.886-.72 3.935"/></svg>
+             View Top Ranked (Pre-Rated Only)
+           </a>
+           {# Toggle Rejected Visibility #}
+           {% if show_rejected %}
+               <a href="{{ url_for('hr_view_applicants', job_id=job_id) }}" class="btn btn-outline-secondary btn-sm">Hide Rejected Applicants</a>
+           {% else %}
+               <a href="{{ url_for('hr_view_applicants', job_id=job_id, show_rejected='true') }}" class="btn btn-outline-secondary btn-sm">Show Rejected Applicants</a>
+           {% endif %}
+       </div>
+        <div> {# Finalize Button #}
+            <form action="{{ url_for('finalize_job', job_id=job_id) }}" method="post" onsubmit="return confirm('FINAL ACTION:\n\nAre you sure you want to finalize selections for this job?\n\n- Status of shortlisted candidates will be set to \'Selected\'.\n- Emails (if configured) will be sent to them.\n- The Job status will be set to \'Closed\'.\n\nThis action cannot be easily undone.');" class="d-inline-block">
+               <button type="submit" class="btn btn-success" {% if job_status != 'open' %}disabled title="Job is not open"{% endif %}>
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill me-1" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
+                   Finalize Selections & Notify Shortlisted
+               </button>
+           </form>
+        </div>
+   </div>
+   <hr>
+
+
+  {# --- Applicant Table --- #}
+  {% if applicants %}
+    <p>Found {{ applicants|length }} application(s). Current view shows: {% if show_rejected %}All (including Rejected){% else %}Pending & Shortlisted{% endif %}.</p>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover caption-top align-middle">
+          <caption>List of applicants{% if not show_rejected %} (Rejected Hidden){% endif %}</caption>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col" style="min-width: 135px;">Actions</th> {# Slightly wider for 3 buttons #}
+              <th scope="col">Status</th>
+              <th scope="col">Applicant Name</th>
+              <th scope="col">Applicant ID (Email)</th>
+              <th scope="col">Submission Date</th>
+              <th scope="col">
+                Resume & AI
+                {# NEW: Rate All Button in Header #}
+                <button class="btn btn-xs btn-outline-info p-1 ms-2 rate-all-unrated-btn" {# Add class #}
+                        data-job-id="{{ job_id }}"
+                        data-bs-toggle="tooltip"
+                        data-bs-title="Rate All Unrated Applicants"
+                        {% if job_status != 'open' %}disabled{% endif %}>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16"><path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774.258c.346-.115.617-.386.732-.732z"/></svg>
+                     <span class="visually-hidden">Rate All Unrated</span>
+                </button>
+                {# End Rate All Button #}
+              </th>
+              <th scope="col">AI Rating (Stars)</th>
+            </tr>
+          </thead>
+          <tbody class="table-group-divider">
+            {% for applicant in applicants %}
+            {# Add unique ID to row and CSS class based on status #}
+            <tr id="applicant-row-{{ loop.index }}" class="applicant-row
+                {% if applicant.status == 'rejected' %} table-secondary text-muted {% endif %}
+                {% if applicant.status == 'shortlisted' %} table-warning {% endif %}
+                {% if applicant.status == 'selected' or applicant.status == 'hired' %} table-success {% endif %}
+            ">
+              <th scope="row">{{ loop.index }}</th>
+              <td> {# --- Status Action Buttons --- #}
+                  {# Shortlist Button #}
+                  <button class="btn btn-sm status-btn {% if applicant.status == 'shortlisted' %}btn-warning{% else %}btn-outline-warning{% endif %}"
+                          data-applicant-id="{{ applicant.applicant_id }}" data-job-id="{{ job_id }}" data-status="shortlisted"
+                          data-bs-toggle="tooltip" title="Shortlist Candidate" {% if job_status != 'open' %}disabled{% endif %}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                  </button>
+                   {# Reject Button #}
+                  <button class="btn btn-sm status-btn {% if applicant.status == 'rejected' %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
+                          data-applicant-id="{{ applicant.applicant_id }}" data-job-id="{{ job_id }}" data-status="rejected"
+                          data-bs-toggle="tooltip" title="Mark as Not Suitable" {% if job_status != 'open' %}disabled{% endif %}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1z"/></svg>
+                  </button>
+                  {# Reset to Pending Button (Moved to the end of this cell) #}
+                  {% if applicant.status != 'pending' %}
+                  <button class="btn btn-sm status-btn btn-outline-info ms-1" {# Add margin #}
+                          data-applicant-id="{{ applicant.applicant_id }}" data-job-id="{{ job_id }}" data-status="pending"
+                          data-bs-toggle="tooltip" title="Reset Status to Pending" {% if job_status != 'open' %}disabled{% endif %}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466"/></svg>
+                  </button>
+                  {% endif %}
+              </td>
+              <td> {# --- Display Status --- #}
+                  <span class="badge status-badge {% if applicant.status == 'pending' %} text-bg-light border {% elif applicant.status == 'shortlisted' %} text-bg-warning {% elif applicant.status == 'rejected' %} text-bg-secondary {% elif applicant.status == 'selected' %} text-bg-success {% elif applicant.status == 'hired' %} text-bg-primary {% else %} text-bg-secondary {% endif %}">
+                      {{ applicant.status | capitalize if applicant.status else 'Pending' }}
+                  </span>
+              </td>
+              <td class="applicant-name">{{ applicant.name if applicant.name else 'N/A' }}</td>
+              <td class="applicant-id">{{ applicant.applicant_id }}</td>
+              <td>{{ applicant.application_date[:16] if applicant.application_date else 'N/A' }}</td>
+              <td> {# Resume & AI Buttons #}
+                {% if applicant.resume_file_path %}
+                  <a href="{{ url_for('view_resume', filename=applicant.resume_file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="tooltip" title="View Uploaded Resume">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text" viewBox="0 0 16 16"><path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/></svg>
+                  </a>
+                {% else %}<span class="text-muted fst-italic me-1">No File</span>{% endif %}
+                {# --- Summary Button --- #}
+                 {% if applicant.rating is not none %}
+                   <button class="btn btn-sm btn-outline-secondary view-summary-btn"
+                           data-applicant-id="{{ applicant.applicant_id }}" data-job-id="{{ job_id }}" data-applicant-name="{{ applicant.name if applicant.name else 'Applicant' }}"
+                           data-bs-toggle="tooltip" data-bs-title="View AI Summary">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-body-text" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M0 .5A.5.5 0 0 1 .5 0h4a.5.5 0 0 1 0 1h-4A.5.5 0 0 1 0 .5m0 2A.5.5 0 0 1 .5 2h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m9 0a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m-9 2A.5.5 0 0 1 .5 4h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5m5 0a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-5 2A.5.5 0 0 1 .5 6h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5m8 0a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-8 2A.5.5 0 0 1 .5 8h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m7 0a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m-7 2a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/></svg>
+                   </button>
+                {% endif %}
+                 {# --- Rate Now Button (Individual) --- #}
+                 {% if applicant.rating is none %}
+                  {# Pass show_rejected state back to URL on redirect #}
+                  <form action="{{ url_for('hr_rate_applicant', applicant_id=applicant.applicant_id, job_id=job_id, show_rejected=request.args.get('show_rejected', 'false')) }}" method="post" style="display: inline;" class="ms-1">
+                     <button type="submit" class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-title="Run AI Rating" {% if job_status != 'open' %}disabled{% endif %}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16"><use xlink:href="#stars-icon"/></svg>{# Reference definition below #}
+                     </button>
+                  </form>
+                {% endif %}
+              </td>
+              <td> {# AI Rating Display #}
+                {% set star_rating = applicant.rating | to_5_star %}
+                {% if star_rating is not none %}
+                   <span class="badge text-bg-primary fs-6" data-bs-toggle="tooltip" data-bs-title="Original AI Score: {{ applicant.rating }}/100">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-star-fill me-1" viewBox="0 0 16 16" style="margin-bottom: 2px;"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                       {{ star_rating }} / 5.00
+                   </span>
+                {% else %}
+                   <span class="badge text-bg-secondary" data-bs-toggle="tooltip" data-bs-title="Needs Rating">
+                       Not Rated
+                   </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div> {# End table-responsive #}
+  {% else %}
+    <div class="alert alert-warning" role="alert">
+      No applicants found matching the current criteria (Job: {{ job_id }}{% if not show_rejected %}, Status: Pending/Shortlisted{% endif %}).
+    </div>
+  {% endif %}
+  <hr>
+   <a href="{{ url_for('hr_list_jobs') }}" class="btn btn-secondary">« Back to Manage Jobs</a>
+
+   <!-- Summary Modal (keep as is) -->
+   <div class="modal fade" id="summaryModal" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
+     <div class="modal-dialog modal-lg">
+       <div class="modal-content">
+         <div class="modal-header">
+           <h1 class="modal-title fs-5" id="summaryModalLabel">AI Summary for: <span id="modalApplicantName">Applicant</span></h1>
+           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+         </div>
+         <div class="modal-body">
+           <div id="modalSummarySpinner" class="text-center" style="display: none;">
+             <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+             <p>Generating summary...</p>
+           </div>
+           <p id="modalSummaryBody" class="mt-2" style="white-space: pre-wrap;"></p>
+         </div>
+         <div class="modal-footer">
+           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+         </div>
+       </div>
+     </div>
+   </div>
+
+   {# --- SVG Icon Definition (for reuse) --- #}
+   <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+     <symbol id="stars-icon" viewBox="0 0 16 16">
+        <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774.258c.346-.115.617-.386.732-.732z"/>
+     </symbol>
+   </svg>
+
+
+   {# --- Include JS for Tooltips, Summary Modal, Status Updates, and NEW Rate All --- #}
+   <script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        console.log("Applicant List DOM loaded.");
+
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        console.log(`Initialized ${tooltipList.length} tooltips.`);
+
+        // --- Summary Modal Logic ---
+        const summaryModalElement = document.getElementById('summaryModal');
+        const modalApplicantNameEl = document.getElementById('modalApplicantName');
+        const modalSummaryBodyEl = document.getElementById('modalSummaryBody');
+        const modalSummarySpinnerEl = document.getElementById('modalSummarySpinner');
+        let summaryModalInstance = null;
+        if (summaryModalElement && modalApplicantNameEl && modalSummaryBodyEl && modalSummarySpinnerEl) {
+            summaryModalInstance = new bootstrap.Modal(summaryModalElement);
+            console.log("Summary Modal instance created.");
+        } else { console.error("One or more summary modal elements not found!"); }
+
+        // --- Status Update Logic ---
+        const statusUpdateUrlTemplate = "{{ url_for('update_status', applicant_id='APPLICANT_ID_PLACEHOLDER', job_id='JOB_ID_PLACEHOLDER') }}";
+
+        // --- NEW: Rate All Unrated Logic ---
+        const rateAllButton = document.querySelector('.rate-all-unrated-btn');
+        if (rateAllButton) {
+            rateAllButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                const button = this;
+                const jobId = button.dataset.jobId;
+                const originalHtml = button.innerHTML;
+
+                if (!confirm(`This will trigger AI rating for ALL applicants in the job '${jobId}' who haven't been rated yet. This might take some time and consume resources. Continue?`)) {
+                    return;
+                }
+
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                // Construct the URL for the new endpoint
+                const rateAllUrl = `/hr/rate_all_unrated/${encodeURIComponent(jobId)}`; // Build URL manually
+                console.log("Calling Rate All endpoint:", rateAllUrl);
+
+                fetch(rateAllUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add CSRF token if needed
+                    }
+                })
+                .then(response => response.json()) // Assume backend sends JSON
+                .then(data => {
+                    console.log("Rate All response:", data);
+                    alert(data.message || "Rating process initiated/completed. Refresh the page to see updated ratings.");
+                    // Consider refreshing the page automatically or updating ratings via JS if needed
+                    // window.location.reload(); // Simple way to see results
+                })
+                .catch(error => {
+                    console.error('Rate All fetch error:', error);
+                    alert(`Error initiating rating process: ${error.message}`);
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalHtml;
+                });
+            });
+        } else { console.log("Rate All button not found."); }
+
+
+        // --- Event Delegation for Table Actions (Summary & Status) ---
+        const tableBody = document.querySelector('tbody.table-group-divider');
+        if (tableBody) {
+            tableBody.addEventListener('click', function(e) {
+                const targetButton = e.target.closest('button');
+                if (!targetButton) return;
+
+                // --- Handle Summary Button ---
+                if (targetButton.classList.contains('view-summary-btn')) {
+                    e.preventDefault();
+                    if (!summaryModalInstance) { console.error("Modal instance not ready."); return; }
+                    const applicantId = targetButton.dataset.applicantId;
+                    const jobId = targetButton.dataset.jobId;
+                    const applicantName = targetButton.dataset.applicantName;
+                    const fetchUrl = `/hr/summary/${encodeURIComponent(applicantId)}/${encodeURIComponent(jobId)}`;
+                    console.log(`Summary button clicked: A:${applicantId}, J:${jobId}, Fetch:${fetchUrl}`);
+                    modalApplicantNameEl.textContent = applicantName;
+                    modalSummaryBodyEl.innerHTML = ''; modalSummaryBodyEl.classList.remove('text-danger');
+                    modalSummarySpinnerEl.style.display = 'block'; summaryModalInstance.show();
+
+                    fetch(fetchUrl)
+                        .then(response => {
+                            console.log(`Summary Fetch status: ${response.status}`);
+                            if (!response.ok) {
+                                return response.json().then(errData => {
+                                    throw new Error(`HTTP error ${response.status}: ${errData.error || 'Unknown server error'}`);
+                                }).catch(() => { throw new Error(`HTTP error! status: ${response.status}`); });
+                            } return response.json();
+                        })
+                        .then(data => {
+                            console.log("Summary data received:", data);
+                            modalSummarySpinnerEl.style.display = 'none';
+                            if (data.error) { modalSummaryBodyEl.textContent = `Could not load summary: ${data.error}`; modalSummaryBodyEl.classList.add('text-danger'); }
+                            else if (data.summary) { modalSummaryBodyEl.textContent = data.summary; } // Use textContent for safety
+                            else { modalSummaryBodyEl.textContent = 'Summary not available.'; modalSummaryBodyEl.classList.add('text-danger'); }
+                        })
+                        .catch(error => {
+                            console.error('Summary Fetch error:', error); modalSummarySpinnerEl.style.display = 'none';
+                            modalSummaryBodyEl.textContent = `Error loading summary: ${error.message}. Check console.`; modalSummaryBodyEl.classList.add('text-danger');
+                        });
+                }
+                // --- Handle Status Button ---
+                else if (targetButton.classList.contains('status-btn')) {
+                    e.preventDefault();
+                    const button = targetButton;
+                    const applicantId = button.dataset.applicantId;
+                    const jobId = button.dataset.jobId;
+                    const newStatus = button.dataset.status;
+                    const originalButtonHtml = button.innerHTML;
+                    button.disabled = true; button.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                    console.log(`Status change clicked: A:${applicantId}, J:${jobId}, New Status:${newStatus}`);
+                    const fetchUrl = statusUpdateUrlTemplate.replace('APPLICANT_ID_PLACEHOLDER', encodeURIComponent(applicantId)).replace('JOB_ID_PLACEHOLDER', encodeURIComponent(jobId));
+                    console.log("Status update URL:", fetchUrl);
+
+                    fetch(fetchUrl, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ status: newStatus })
+                    })
+                    .then(response => {
+                        if (!response.ok) { return response.json().then(errData => { throw new Error(`HTTP error ${response.status}: ${errData.error || 'Failed'}`); }).catch(() => { throw new Error(`HTTP error! ${response.status}`); }); }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Status update response:", data);
+                        if (data.success) {
+                            const applicantRow = button.closest('tr.applicant-row');
+                            if (applicantRow) {
+                                // Update Row Style
+                                applicantRow.classList.remove('table-secondary', 'text-muted', 'table-warning', 'table-success');
+                                if (newStatus === 'rejected') applicantRow.classList.add('table-secondary', 'text-muted');
+                                else if (newStatus === 'shortlisted') applicantRow.classList.add('table-warning');
+                                else if (newStatus === 'selected' || newStatus === 'hired') applicantRow.classList.add('table-success');
+                                // Update Status Badge
+                                const statusBadge = applicantRow.querySelector('.status-badge');
+                                if (statusBadge) {
+                                    statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                                    statusBadge.className = 'badge status-badge '; // Reset
+                                    if (newStatus === 'pending') statusBadge.classList.add('text-bg-light', 'border');
+                                    else if (newStatus === 'shortlisted') statusBadge.classList.add('text-bg-warning');
+                                    else if (newStatus === 'rejected') statusBadge.classList.add('text-bg-secondary');
+                                    else if (newStatus === 'selected') statusBadge.classList.add('text-bg-success');
+                                    else if (newStatus === 'hired') statusBadge.classList.add('text-bg-primary');
+                                    else statusBadge.classList.add('text-bg-secondary');
+                                }
+                                // Update Button Active States
+                                const actionCell = applicantRow.querySelector('td:nth-child(2)'); // Check index
+                                if(actionCell){
+                                    actionCell.querySelectorAll('.status-btn').forEach(btn => {
+                                        const btnStatus = btn.dataset.status;
+                                        btn.classList.remove('btn-warning', 'btn-secondary', 'btn-info', 'btn-outline-warning', 'btn-outline-secondary', 'btn-outline-info');
+                                        // Apply active class to the clicked button's status type
+                                        if (btnStatus === newStatus) {
+                                            if(btnStatus === 'shortlisted') btn.classList.add('btn-warning');
+                                            else if(btnStatus === 'rejected') btn.classList.add('btn-secondary');
+                                            // Add 'pending' active style if needed, currently only outline
+                                            // else if(btnStatus === 'pending') btn.classList.add('btn-info'); // Example
+                                        } else { // Make others outline
+                                            if(btnStatus === 'shortlisted') btn.classList.add('btn-outline-warning');
+                                            else if(btnStatus === 'rejected') btn.classList.add('btn-outline-secondary');
+                                            // Pending reset button is already outline
+                                            else if(btnStatus === 'pending') btn.classList.add('btn-outline-info');
+                                        }
+                                    });
+                                    // Manage Reset Button Visibility
+                                    const resetButton = actionCell.querySelector('button[data-status="pending"]');
+                                    if(resetButton) {
+                                        // Check if the button should exist based on the *new* status
+                                        if (newStatus === 'pending') {
+                                            // If the new status IS pending, hide the reset button
+                                            resetButton.style.display = 'none';
+                                            // Also ensure it doesn't have active styling if it was somehow added
+                                            resetButton.classList.remove('btn-info');
+                                            resetButton.classList.add('btn-outline-info');
+                                        } else {
+                                            // If the new status is NOT pending, ensure the reset button is visible
+                                            resetButton.style.display = 'inline-block';
+                                        }
+                                    }
+                                }
+                            } else { console.warn("Could not find row to update UI:", applicantId); }
+                        } else { alert(`Error updating status: ${data.error || 'Unknown error'}`); }
+                    })
+                    .catch(error => { console.error('Status update fetch error:', error); alert(`Error updating status: ${error.message}`); })
+                    .finally(() => { button.disabled = false; button.innerHTML = originalButtonHtml; });
+                }
+            });
+        } else { console.error("Table body 'tbody.table-group-divider' not found."); }
+    }); // End DOMContentLoaded listener
+   </script>
+{% endblock %}

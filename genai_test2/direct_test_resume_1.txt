@@ -1,0 +1,5 @@
+Alice Developer
+New York, NY | alice.dev@email.com
+Software Engineer with 4 years experience in Python development.
+Skills: Python, Flask, SQL, API Design, Git.
+Education: BSc Computer Science, State University (2020)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { Calendar, MapPin, Clock, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Job {
@@ -10,6 +10,7 @@ interface Job {
   createdAt: string;
   deadline: string;
   requirements: string[];
+  location: string;
 }
 
 export default function JobList() {
@@ -17,27 +18,84 @@ export default function JobList() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchJobs = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/get-job-posts",
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      setJobs(data.response);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/api/get-job-posts",
-          {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-          }
-        );
-        const data = await response.json();
-        setJobs(data);
-      } catch (error) {
-        console.error("Error fetching jobs:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchJobs();
   }, []);
+
+  const closeJob = async (jobId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking the close button
+    
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/close-job/${jobId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      
+      if (response.ok) {
+        // Update the job status locally to avoid refetching
+        setJobs(prevJobs => 
+          prevJobs.map(job => 
+            job._id === jobId ? { ...job, status: "closed" } : job
+          )
+        );
+      } else {
+        console.error("Failed to close job");
+      }
+    } catch (error) {
+      console.error("Error closing job:", error);
+    }
+  };
+
+  const reopenJob = async (jobId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking the reopen button
+    
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/reopen-job/${jobId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      
+      if (response.ok) {
+        // Update the job status locally to avoid refetching
+        setJobs(prevJobs => 
+          prevJobs.map(job => 
+            job._id === jobId ? { ...job, status: "open" } : job
+          )
+        );
+      } else {
+        console.error("Failed to reopen job");
+      }
+    } catch (error) {
+      console.error("Error reopening job:", error);
+    }
+  };
 
   const activeJobs = jobs.filter((job) => job.status === "open");
   const closedJobs = jobs.filter((job) => job.status === "closed");
@@ -60,6 +118,8 @@ export default function JobList() {
               job={job}
               navigate={navigate}
               isActive={true}
+              onClose={closeJob}
+              reopenJob={reopenJob}
             />
           ))}
           {activeJobs.length === 0 && (
@@ -82,6 +142,8 @@ export default function JobList() {
               job={job}
               navigate={navigate}
               isActive={false}
+              onClose={closeJob}
+              reopenJob={reopenJob}
             />
           ))}
           {closedJobs.length === 0 && (
@@ -97,15 +159,19 @@ function JobItem({
   job,
   navigate,
   isActive,
+  onClose,
+  reopenJob,
 }: {
   job: Job;
   navigate: any;
   isActive: boolean;
+  onClose: (jobId: string, e: React.MouseEvent) => void;
+  reopenJob: (jobId: string, e: React.MouseEvent) => void;
 }) {
   return (
     <div
-      className="p-6 hover:bg-gray-50 cursor-pointer"
-      onClick={() => navigate(`/jobs/${job._id}`, { state: { job } })}
+      className={`p-6 hover:bg-gray-50 ${isActive ? "cursor-pointer" : "cursor-default"} relative`}
+      onClick={() => isActive && navigate(`/jobs/${job._id}`, { state: { job } })}
     >
       <div className="flex justify-between items-start">
         <div>
@@ -118,15 +184,34 @@ function JobItem({
             Posted {new Date(job.createdAt).toLocaleDateString()}
           </div>
         </div>
-        <span
-          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-            isActive
-              ? "bg-green-100 text-green-800"
-              : "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {isActive ? "Active" : "Closed"}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+              isActive
+                ? "bg-green-100 text-green-800"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            {isActive ? "Active" : "Closed"}
+          </span>
+          {isActive ? (
+            <button
+              onClick={(e) => onClose(job._id, e)}
+              className="ml-2 p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
+              title="Close Job Post"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={(e) => reopenJob(job._id, e)}
+              className="ml-2 px-2 py-1 bg-green-100 text-green-600 rounded-md hover:bg-green-200 transition-colors text-xs font-medium"
+              title="Reopen Job Post"
+            >
+              Reopen
+            </button>
+          )}
+        </div>
       </div>
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -135,9 +220,11 @@ function JobItem({
             Location: {job.location}
           </div>
         </div>
-        <button className="text-sm font-medium text-blue-600 hover:text-blue-500">
-          View Details
-        </button>
+        {isActive && (
+          <button className="text-sm font-medium text-blue-600 hover:text-blue-500">
+            View Details
+          </button>
+        )}
       </div>
     </div>
   );

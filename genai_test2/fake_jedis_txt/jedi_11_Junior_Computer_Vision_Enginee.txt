@@ -1,0 +1,34 @@
+**Job Title:** Junior Computer Vision Engineer
+**Company:** Aether Systems
+**Location:** Bangalore, India
+**Job Type:** Internship
+
+**About Aether Systems:**
+Aether Systems is a global innovator focused on leveraging AI to solve complex challenges in the robotics sector. We offer a collaborative and fast-paced environment where you can make a real impact.
+
+**Role Summary:**
+We are seeking a talented and motivated Junior Computer Vision Engineer to join our growing team. In this role, you will be responsible for researching and implementing state-of-the-art AI/ML solutions, with a potential focus on A/B Testing.
+
+**Key Responsibilities:**
+*   Design, implement, and evaluate machine learning models for Statistical Modeling.
+*   Stay current with the latest research papers and technological advancements in AI/ML.
+*   Design, implement, and evaluate machine learning models for Embedded Systems.
+*   Conduct experiments and A/B tests to validate hypotheses and improve model performance.
+
+**Required Qualifications:**
+*   M.S./M.Tech in Machine Learning or a closely related quantitative field (e.g., Physics, Operations Research).
+*   10+ years of relevant industry experience in Data Science.
+*   Proficiency in at least one programming language such as MATLAB.
+*   Hands-on experience with core ML libraries/frameworks (e.g., Scikit-learn).
+*   Solid understanding of fundamental machine learning algorithms and statistical concepts.
+*   Strong analytical and problem-solving skills.
+*   Excellent communication and teamwork abilities.
+
+**Preferred Qualifications:**
+*   Ph.D. or Ph.D. preferred.
+*   Experience or familiarity with JavaScript.
+*   Experience or familiarity with Azure.
+*   Experience or familiarity with Python.
+*   Experience with big data technologies (e.g., Spark, Hadoop).
+*   Publications in top-tier AI/ML conferences or journals.
+*   Contributions to relevant open-source projects.

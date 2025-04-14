@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Job Posting{% endblock %}
+
+{% block content %}
+  <h2>Create New Job Posting</h2>
+  <hr>
+  {# Add enctype for file uploads #}
+  <form action="{{ url_for('hr_create_job') }}" method="post" enctype="multipart/form-data">
+      <div class="mb-3">
+          <label for="job_id" class="form-label">Job ID (Unique Code):<span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="job_id" name="job_id" required>
+      </div>
+      <div class="mb-3">
+          <label for="title" class="form-label">Job Title:<span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="title" name="title" required>
+          <div class="form-text">Can be extracted from JD file if left blank.</div>
+      </div>
+
+      <hr>
+      {# --- File Upload Section --- #}
+      <div class="mb-3 card card-body bg-light">
+        <h5>Option 1: Upload Job Description File (Recommended)</h5>
+        <label for="jd_file" class="form-label">Select File:</label>
+        <input type="file" class="form-control" id="jd_file" name="jd_file" accept=".pdf,.doc,.docx,.txt">
+        <div class="form-text">Upload a PDF, Word document, or Text file containing the full job description. The AI will analyze this file.</div>
+      </div>
+
+      {# --- Manual Text Entry Section --- #}
+      <div class="mb-3 card card-body">
+          <h5>Option 2: Enter Description Manually</h5>
+          <label for="description_text" class="form-label">Job Description:</label>
+          <textarea class="form-control" id="description_text" name="description_text" rows="10" placeholder="Paste or write the job description here if not uploading a file."></textarea>
+          <div class="form-text">The AI will analyze this text if no file is uploaded.</div>
+      </div>
+       <hr>
+      <p class="form-text"><span class="text-danger">*</span> Required field.</p>
+
+
+      <button type="submit" class="btn btn-success">Create Job</button>
+      <a href="{{ url_for('hr_dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+{% endblock %}

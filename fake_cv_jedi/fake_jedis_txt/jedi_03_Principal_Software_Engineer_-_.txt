@@ -1,0 +1,34 @@
+**Job Title:** Principal Software Engineer - AI/ML
+**Company:** CogniLink Systems
+**Location:** Hyderabad, India
+**Job Type:** Full-time, Hybrid
+
+**About CogniLink Systems:**
+CogniLink Systems is a leading tech firm focused on leveraging AI to transform industries in the healthcare sector. We offer a collaborative and fast-paced environment where you can make a real impact.
+
+**Role Summary:**
+We are seeking a talented and motivated Principal Software Engineer - AI/ML to join our growing team. In this role, you will be responsible for designing, developing, and deploying state-of-the-art AI/ML solutions, with a potential focus on Automation.
+
+**Key Responsibilities:**
+*   Collaborate effectively with product managers, software engineers, and other data scientists/researchers.
+*   Develop and maintain robust data pipelines and MLOps infrastructure.
+*   Design, implement, and evaluate machine learning models for Data Warehousing.
+*   Stay current with the latest research papers and technological advancements in AI/ML.
+*   Stay current with the latest research papers and technological advancements in AI/ML.
+
+**Required Qualifications:**
+*   M.S./M.Tech in Computer Science or a closely related quantitative field (e.g., Physics, Operations Research).
+*   3+ years of relevant industry experience in Software Engineering (ML).
+*   Proficiency in at least one programming language such as Python.
+*   Hands-on experience with core ML libraries/frameworks (e.g., spaCy).
+*   Solid understanding of fundamental machine learning algorithms and statistical concepts.
+*   Strong analytical and problem-solving skills.
+*   Excellent communication and teamwork abilities.
+
+**Preferred Qualifications:**
+*   Ph.D. or Ph.D. preferred.
+*   6+ years of experience.
+*   Experience or familiarity with Linux.
+*   Experience or familiarity with Airflow.
+*   Experience or familiarity with Reinforcement Learning.
+*   Publications in top-tier AI/ML conferences or journals.

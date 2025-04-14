@@ -54,7 +54,7 @@ export default function Auth({ handleCancel }: prop) {
             Get Started <span className="text-neutral-600">in seconds</span>
           </h1>
           <p className="mt-4 font-medium text-base text-neutral-500">
-            Explore job opportunities at TechCorp
+            Explore job opportunities at HireSight
           </p>
           <div className="mt-8"></div>
           <form onSubmit={handleSubmit}>

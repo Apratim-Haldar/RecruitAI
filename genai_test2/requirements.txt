@@ -1,0 +1,32 @@
+# --- Core Web Framework ---
+Flask>=2.0 # Using version 2+ for newer features, adjust if needed
+Werkzeug>=2.0 # Dependency for Flask, secure_filename
+MarkupSafe>=2.0 # Dependency for Flask/Jinja2 templating
+
+# --- Email ---
+Flask-Mail>=0.9
+
+# --- Scheduling ---
+Flask-APScheduler>=1.12 # For background tasks
+
+# --- AI & Language Model ---
+# CrewAI framework
+crewai>=0.28.8 # Use a specific recent version or remove >= for latest stable
+# Google Generative AI (Gemini) SDK and LangChain Integration
+google-generativeai>=0.4 # Direct Gemini SDK
+langchain-google-genai>=0.0.9 # Langchain integration
+langchain>=0.1 # Core LangChain library
+
+# --- File Parsing ---
+# Base library for parsing various document types
+unstructured>=0.12 # Use a specific recent version or remove >= for latest stable
+# Specific parsers often needed by unstructured:
+pypdf>=3.0 # For PDF parsing
+python-docx>=1.0 # For .docx parsing
+# Note: For complex PDFs (image-based), unstructured might need system dependencies
+# like Tesseract OCR. See unstructured documentation if needed.
+
+# --- Utilities ---
+python-dotenv>=1.0 # For loading .env configuration files
+
+# Note: sqlite3 is part of Python's standard library and does not need to be listed.

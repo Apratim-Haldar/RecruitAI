@@ -95,9 +95,9 @@ export function ApplicantsTable({ applications, loading, reload }: Props) {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon">
+        {/*   <Button variant="outline" size="icon">
             <Filter className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
       </div>
 

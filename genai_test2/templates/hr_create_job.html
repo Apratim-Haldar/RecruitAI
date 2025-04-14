@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Job Posting{% endblock %}
+
+{% block content %}
+  <h2>Create New Job Posting</h2>
+  <hr>
+  {# Add enctype for file uploads #}
+  <form action="{{ url_for('hr_create_job') }}" method="post" enctype="multipart/form-data">
+      <div class="mb-3">
+          <label for="job_id" class="form-label">Job ID (Unique Code):<span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="job_id" name="job_id" required>
+      </div>
+      <div class="mb-3">
+          <label for="title" class="form-label">Job Title:</label> {# Title is not strictly required now #}
+          <input type="text" class="form-control" id="title" name="title">
+          <div class="form-text">Can be derived from JD file if uploaded, or provide manually. If left blank after processing, Job ID will be used.</div>
+      </div>
+
+      <hr>
+      {# --- File Upload Section --- #}
+      <div class="mb-3 card card-body bg-light">
+        <h5>Option 1: Upload Job Description File (Recommended)</h5>
+        <label for="jd_file" class="form-label">Select File:</label>
+        <input type="file" class="form-control" id="jd_file" name="jd_file" accept=".pdf,.doc,.docx,.txt">
+        <div class="form-text">Upload a PDF, Word document, or Text file containing the full job description. The AI will analyze this file.</div>
+      </div>
+
+      {# --- Manual Text Entry Section --- #}
+      <div class="mb-3 card card-body">
+          <h5>Option 2: Enter Description Manually</h5>
+          <label for="description_text" class="form-label">Job Description:</label>
+          <textarea class="form-control" id="description_text" name="description_text" rows="10" placeholder="Paste or write the job description here if not uploading a file."></textarea>
+          <div class="form-text">The AI will analyze this text if no file is uploaded.</div>
+      </div>
+      <hr>
+
+      {# --- NEW: AI Analysis Automation Preferences --- #}
+      <div class="mb-3 card card-body border-info">
+          <h5 class="card-title text-info">AI Applicant Analysis Automation</h5>
+          <p class="card-text small">Configure how/when the AI should automatically rate incoming applications.</p>
+          <div class="form-check">
+              <input class="form-check-input analysis-pref-radio" type="radio" name="analysis_preference" id="pref_manual" value="manual" checked>
+              <label class="form-check-label" for="pref_manual">
+                  Manual Only (Rate applicants individually or via 'Rate All' button)
+              </label>
+          </div>
+          <div class="form-check">
+              <input class="form-check-input analysis-pref-radio" type="radio" name="analysis_preference" id="pref_scheduled" value="scheduled">
+              <label class="form-check-label" for="pref_scheduled">
+                  Scheduled Daily Analysis
+              </label>
+              <div class="mt-2 ms-4" id="schedule-options" style="display: none;">
+                  <label for="analysis_schedule_time" class="form-label form-label-sm">Run analysis around this time each day (HH:MM):</label>
+                  <input type="time" class="form-control form-control-sm" id="analysis_schedule_time" name="analysis_schedule_time" style="width: 150px;">
+                  <div class="form-text form-text-sm">The analysis will run once daily around the specified time for all unrated applicants.</div>
+              </div>
+          </div>
+          <div class="form-check">
+              <input class="form-check-input analysis-pref-radio" type="radio" name="analysis_preference" id="pref_batch" value="batch">
+              <label class="form-check-label" for="pref_batch">
+                  Batch Analysis on New Entries
+              </label>
+              <div class="mt-2 ms-4" id="batch-options" style="display: none;">
+                  <label for="analysis_batch_size" class="form-label form-label-sm">Run analysis when unrated applicants reach:</label>
+                  <input type="number" class="form-control form-control-sm" id="analysis_batch_size" name="analysis_batch_size" value="5" min="1" style="width: 100px;">
+                  <div class="form-text form-text-sm">Analysis triggers automatically when at least this many new (unrated) applications accumulate. Checked periodically.</div>
+              </div>
+          </div>
+      </div>
+      {# --- End Preferences Section --- #}
+      <hr>
+
+      <p class="form-text"><span class="text-danger">*</span> Required field.</p>
+
+      <button type="submit" class="btn btn-success">Create Job</button>
+      <a href="{{ url_for('hr_dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+
+  {# --- Add JavaScript to show/hide options --- #}
+  <script>
+      document.addEventListener('DOMContentLoaded', () => {
+          const scheduleOptions = document.getElementById('schedule-options');
+          const batchOptions = document.getElementById('batch-options');
+          const prefRadios = document.querySelectorAll('.analysis-pref-radio');
+
+          function toggleOptions() {
+              const selectedValue = document.querySelector('input[name="analysis_preference"]:checked').value;
+              scheduleOptions.style.display = (selectedValue === 'scheduled') ? 'block' : 'none';
+              batchOptions.style.display = (selectedValue === 'batch') ? 'block' : 'none';
+
+              // Make inputs required only when visible (optional, but good practice)
+              document.getElementById('analysis_schedule_time').required = (selectedValue === 'scheduled');
+              document.getElementById('analysis_batch_size').required = (selectedValue === 'batch');
+
+          }
+
+          prefRadios.forEach(radio => {
+              radio.addEventListener('change', toggleOptions);
+          });
+
+          // Initial check
+          toggleOptions();
+      });
+  </script>
+{% endblock %}

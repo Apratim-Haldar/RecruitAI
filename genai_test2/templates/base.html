@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Job Portal AI{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        /* --- Base Layout Styles --- */
+        body { padding-top: 5rem; padding-bottom: 80px; /* Add padding for fixed chat input */ }
+        .navbar-brand { font-weight: bold; }
+        /* Adjusted container width for potentially wider HR views */
+        .container, .container-fluid { max-width: 1140px; }
+        pre { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 1rem; border-radius: 0.375rem; white-space: pre-wrap; word-wrap: break-word; }
+        .card { margin-bottom: 1.5rem; }
+
+        /* --- Chatbot Widget Styles (Keep as is) --- */
+        #chatbot-widget { /* ... existing styles ... */ }
+        #chatbox-header { /* ... existing styles ... */ }
+        #chatbox-header button { /* ... existing styles ... */ }
+        #chatbox { /* ... existing styles ... */ }
+        .chat-message { /* ... existing styles ... */ }
+        .user-message { /* ... existing styles ... */ }
+        .user-message .message-bubble { /* ... existing styles ... */ }
+        .bot-message { /* ... existing styles ... */ }
+        .bot-message .message-bubble { /* ... existing styles ... */ }
+        .bot-message strong { /* ... existing styles ... */ }
+        .bot-message ul { /* ... existing styles ... */ }
+        .bot-message li { /* ... existing styles ... */ }
+        #chat-input-area { /* ... existing styles ... */ }
+        #chat-input { /* ... existing styles ... */ }
+        #send-button { /* ... existing styles ... */ }
+        #send-button:hover { /* ... existing styles ... */ }
+        #send-button:disabled { /* ... existing styles ... */ }
+        .typing-indicator { /* ... existing styles ... */ }
+        .typing-indicator .message-bubble { /* ... existing styles ... */ }
+
+        /* --- Custom Modal Adjustments (Optional) --- */
+        #customConfirmModal .modal-body,
+        #customAlertModal .modal-body {
+             white-space: pre-wrap; /* Ensure line breaks are respected */
+        }
+        .modal-backdrop {
+            z-index: 1050; /* Default is 1050 */
+        }
+        .modal {
+            z-index: 1060; /* Default is 1055, needs to be higher than backdrop */
+        }
+
+
+    </style>
+  </head>
+  <body>
+
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <div class="container-fluid"> {# Use container-fluid for full width nav #}
+        <a class="navbar-brand" href="/">Job Portal AI</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarDefault" aria-controls="navbarDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarDefault">
+          <ul class="navbar-nav me-auto mb-2 mb-md-0">
+            <li class="nav-item">
+              <a class="nav-link {% if request.endpoint == 'list_jobs' %}active{% endif %}" href="{{ url_for('list_jobs') }}">View Jobs (Applicant)</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.path.startswith('/hr') %}active{% endif %}" href="{{ url_for('hr_dashboard') }}">HR / Company Portal</a>
+            </li>
+          </ul>
+          {# Add Login/Logout or User Info Here Later #}
+        </div>
+      </div>
+    </nav>
+
+    <main class="container-fluid mt-4"> {# Use container-fluid for potentially wider content #}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}
+      <!-- Page specific content goes here -->
+      {% endblock %}
+
+      <!-- Conditionally show Chatbot Widget only on HR pages -->
+      {% if request.path.startswith('/hr') %}
+      <div id="chatbot-widget" style="display: none;"> {# Start hidden for icon toggle later #}
+          <div id="chatbox-header">
+              <span>HR Assistant</span>
+               <button id="minimize-chatbot" title="Minimize Chat">−</button> {# Changed from close to minimize #}
+          </div>
+          <div id="chatbox">
+              <div class="chat-message bot-message">
+                   <div class="message-bubble">Hello! How can I assist you with HR tasks today?</div>
+              </div>
+          </div>
+          <div id="chat-input-area">
+              <input type="text" id="chat-input" placeholder="Ask me something..." autocomplete="off">
+              <button id="send-button">Send</button>
+          </div>
+      </div>
+      {# Chatbot Icon Placeholder (Initially visible) #}
+       <button id="chatbot-icon" title="Open HR Assistant" class="btn btn-primary rounded-circle p-2" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; z-index: 999; display: block;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-robot" viewBox="0 0 16 16">
+            <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5M3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.6 26.6 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.93.93 0 0 1-.765.935c-.845.147-2.34.346-4.235.346s-3.39-.2-4.235-.346A.93.93 0 0 1 3 9.219zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a25 25 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25 25 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.55.076-1.232.149-2.02.193a.25.25 0 0 0-.19-.071l-.867-.4"/>
+            <path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1m3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/>
+          </svg>
+       </button>
+      {% endif %}
+
+    </main><!-- /.container -->
+
+
+    {# --- Custom Modals --- #}
+    <!-- Custom Alert Modal -->
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="customAlertModalLabel">Notification</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="customAlertModalBody">
+            ...
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div class="modal fade" id="customConfirmModal" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="customConfirmModalLabel">Confirmation</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="customConfirmModalBody">
+            ...
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="customCancelBtn">Cancel</button>
+            <button type="button" class="btn btn-primary" id="customConfirmBtn">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {# --- End Custom Modals --- #}
+
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <!-- Global Helper JS (Alerts/Confirms) -->
+    <script>
+        // --- Custom Alert Function ---
+        window.showCustomAlert = (message, title = "Notification") => {
+            const alertModalEl = document.getElementById('customAlertModal');
+            if (!alertModalEl) return alert(message); // Fallback
+            try {
+                 document.getElementById('customAlertModalLabel').textContent = title;
+                 document.getElementById('customAlertModalBody').textContent = message;
+                 const modalInstance = bootstrap.Modal.getOrCreateInstance(alertModalEl);
+                 modalInstance.show();
+            } catch (e) {
+                console.error("Error showing custom alert:", e);
+                alert(message); // Fallback if modal elements not found
+            }
+        };
+
+        // --- Custom Confirm Function ---
+        // Store listeners globally to prevent duplicates if modal is shown rapidly
+        let confirmHandler = null;
+        let cancelHandler = null;
+
+        window.showCustomConfirm = (message, onConfirmCallback, title = "Confirmation") => {
+            const confirmModalEl = document.getElementById('customConfirmModal');
+            if (!confirmModalEl) { // Fallback if modal doesn't exist
+                if (confirm(message)) { onConfirmCallback(); }
+                return;
+            }
+            try {
+                const confirmModalInstance = bootstrap.Modal.getOrCreateInstance(confirmModalEl);
+                document.getElementById('customConfirmModalLabel').textContent = title;
+                document.getElementById('customConfirmModalBody').textContent = message;
+
+                const confirmBtn = document.getElementById('customConfirmBtn');
+                const cancelBtn = document.getElementById('customCancelBtn');
+
+                // --- IMPORTANT: Remove previous listeners ---
+                if (confirmHandler) {
+                    confirmBtn.removeEventListener('click', confirmHandler);
+                    console.log("Removed old confirm handler");
+                }
+                if (cancelHandler) {
+                    cancelBtn.removeEventListener('click', cancelHandler);
+                    console.log("Removed old cancel handler");
+                }
+                // --- End Listener Removal ---
+
+                // Define new handlers
+                confirmHandler = () => {
+                    console.log("Confirm button clicked");
+                    onConfirmCallback(); // Execute the specific action
+                    confirmModalInstance.hide();
+                };
+
+                cancelHandler = () => {
+                    console.log("Cancel button clicked");
+                     confirmModalInstance.hide(); // Just hide
+                };
+
+                // Add the new listeners
+                confirmBtn.addEventListener('click', confirmHandler, { once: true }); // Use once to auto-remove after first click
+                cancelBtn.addEventListener('click', cancelHandler, { once: true }); // Use once
+
+                // Cleanup listener (redundant if using 'once' but safe fallback)
+                 const hiddenHandler = () => {
+                    confirmBtn.removeEventListener('click', confirmHandler);
+                    cancelBtn.removeEventListener('click', cancelHandler);
+                     console.log("Cleaned up confirm modal listeners on hide");
+                     confirmModalEl.removeEventListener('hidden.bs.modal', hiddenHandler); // Remove self
+                 };
+                 confirmModalEl.addEventListener('hidden.bs.modal', hiddenHandler);
+
+
+                confirmModalInstance.show();
+            } catch (e) {
+                 console.error("Error showing custom confirm:", e);
+                 if (confirm(message)) { onConfirmCallback(); } // Fallback
+            }
+        };
+
+    </script>
+
+    <!-- Chatbot JavaScript -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+          const chatbotWidget = document.getElementById('chatbot-widget');
+          const chatbotIcon = document.getElementById('chatbot-icon'); // Get the icon
+
+          if (!chatbotWidget || !chatbotIcon) { // Check for both
+              return; // Exit if not on an HR page or elements missing
+          }
+          console.log("Chatbot JS initializing...");
+
+          const chatbox = document.getElementById('chatbox');
+          const chatInput = document.getElementById('chat-input');
+          const sendButton = document.getElementById('send-button');
+          const minimizeButton = document.getElementById('minimize-chatbot'); // Changed from closeButton
+          const chatHeader = document.getElementById('chatbox-header');
+
+          let isDragging = false;
+          let offsetX, offsetY;
+
+          // --- Function to get Job ID from current page URL ---
+          function getPageContextJobId() {
+              const path = window.location.pathname; let match;
+              match = path.match(/^\/hr\/job\/([^\/]+)/); if (match && match[1]) return match[1];
+              match = path.match(/^\/hr\/(?:summary|rate_applicant)\/[^\/]+\/([^\/]+)/); if (match && match[1]) return match[1];
+              return null;
+          }
+
+          function addMessage(message, sender) { /* ... keep as is ... */
+               const messageDiv = document.createElement('div');
+              messageDiv.classList.add('chat-message', sender === 'user' ? 'user-message' : 'bot-message');
+              const bubbleDiv = document.createElement('div');
+              bubbleDiv.classList.add('message-bubble');
+              bubbleDiv.innerHTML = message; // Use innerHTML for potential formatting
+              messageDiv.appendChild(bubbleDiv);
+              chatbox.appendChild(messageDiv);
+              setTimeout(() => { chatbox.scrollTop = chatbox.scrollHeight; }, 0); }
+          function showTypingIndicator() { /* ... keep as is ... */
+               removeTypingIndicator(); const typingDiv = document.createElement('div'); typingDiv.classList.add('chat-message', 'bot-message', 'typing-indicator'); typingDiv.id = 'typing-indicator'; typingDiv.innerHTML = '<div class="message-bubble"><i>Typing...</i></div>'; chatbox.appendChild(typingDiv); setTimeout(() => { chatbox.scrollTop = chatbox.scrollHeight; }, 0); }
+          function removeTypingIndicator() { /* ... keep as is ... */
+              const indicator = document.getElementById('typing-indicator'); if (indicator) indicator.remove(); }
+
+          async function sendMessage() { /* ... keep as is ... */
+                const userMessage = chatInput.value.trim(); if (!userMessage) return; addMessage(userMessage, 'user'); chatInput.value = ''; chatInput.disabled = true; sendButton.disabled = true; showTypingIndicator(); const currentPageJobId = getPageContextJobId(); try { const response = await fetch("{{ url_for('hr_chat_api') }}", { method: 'POST', headers: { 'Content-Type': 'application/json', {# CSRF #} }, body: JSON.stringify({ message: userMessage, page_context_job_id: currentPageJobId }) }); removeTypingIndicator(); if (!response.ok) { let errorMsg = `HTTP error ${response.status}`; try { const errData = await response.json(); errorMsg = errData.response || errData.error || errorMsg; } catch (e) {} throw new Error(errorMsg); } const data = await response.json(); addMessage(data.response || "Sorry, I didn't get a valid response.", 'bot'); } catch (error) { removeTypingIndicator(); console.error('Chatbot Error:', error); addMessage(`Sorry, there was an error: ${error.message}`, 'bot'); } finally { chatInput.disabled = false; sendButton.disabled = false; chatInput.focus(); }
+          }
+
+          // --- Dragging Functionality (Keep as is) ---
+          function onMouseDown(e) { /* ... keep as is ... */ if (e.target === minimizeButton) return; isDragging = true; offsetX = e.clientX - chatbotWidget.offsetLeft; offsetY = e.clientY - chatbotWidget.offsetTop; chatHeader.style.cursor = 'grabbing'; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp); }
+          function onMouseMove(e) { /* ... keep as is ... */ if (!isDragging) return; let newX = e.clientX - offsetX; let newY = e.clientY - offsetY; const maxX = window.innerWidth - chatbotWidget.offsetWidth; const maxY = window.innerHeight - chatbotWidget.offsetHeight; newX = Math.max(0, Math.min(newX, maxX)); newY = Math.max(0, Math.min(newY, maxY)); chatbotWidget.style.left = newX + 'px'; chatbotWidget.style.top = newY + 'px'; chatbotWidget.style.right = 'auto'; chatbotWidget.style.bottom = 'auto'; }
+          function onMouseUp() { /* ... keep as is ... */ if (isDragging) { isDragging = false; chatHeader.style.cursor = 'grab'; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); } }
+          chatHeader.addEventListener('mousedown', onMouseDown);
+
+          // --- Chat Input/Send Listeners (Keep as is) ---
+          sendButton.addEventListener('click', sendMessage);
+          chatInput.addEventListener('keypress', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); } });
+
+          // --- NEW: Chatbot Icon Toggle Logic ---
+          if(minimizeButton) {
+               minimizeButton.addEventListener('click', () => {
+                   chatbotWidget.style.display = 'none'; // Hide widget
+                   chatbotIcon.style.display = 'block';  // Show icon
+               });
+          }
+           if(chatbotIcon) {
+               chatbotIcon.addEventListener('click', () => {
+                   chatbotIcon.style.display = 'none';   // Hide icon
+                   chatbotWidget.style.display = 'flex'; // Show widget (using flex as per CSS)
+                   chatInput.focus(); // Focus input when opened
+               });
+           }
+          // --- End Toggle Logic ---
+
+          console.log("Chatbot UI initialized.");
+      });
+    </script>
+
+    {# Include page-specific scripts after global ones #}
+    {% block scripts %}{% endblock %}
+
+  </body>
+</html>

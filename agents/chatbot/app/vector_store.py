@@ -9,17 +9,42 @@ embedding = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_ap
 def format_documents():
     candidates = load_candidates()
     jobposts = load_job_posts()
+
+    # Create jobpost lookup by ID for easy reference
+    jobpost_map = {str(j["_id"]): j for j in jobposts}
     docs = []
 
     for c in candidates:
-        text = f"Candidate: {c['firstName']}, JobPostID:{c['jobPost']}, {c['lastName']}, Email: {c['email']}, Status: {c['status']}, Experience: {c.get('experience', 'NA')} years, resume_details: {c['resume_details']}, AI Eval: {c.get('aiEvaluation', {})}"
-        docs.append(Document(page_content=text, metadata={"type": "candidate", "id": str(c["_id"]), "jobPostId": str(c["jobPost"])}))
+        job_id = str(c["jobPost"])
+        job_info = jobpost_map.get(job_id)
+        job_title = job_info["title"] if job_info else "Unknown Role"
+        job_location = job_info["location"] if job_info else "Unknown Location"
+
+        text = (
+            f"Candidate: {c['firstName']} {c['lastName']} applied for the role of {job_title} in {job_location}. "
+            f"Email: {c['email']}, Status: {c['status']}, Experience: {c.get('experience', 'NA')} years. "
+            f"Resume Summary: {c.get('resume_details', 'N/A')}. "
+            f"AI Evaluation: {c.get('aiEvaluation', {})}"
+        )
+
+        docs.append(Document(
+            page_content=text,
+            metadata={"type": "candidate", "id": str(c["_id"]), "jobPostId": job_id}
+        ))
 
     for j in jobposts:
-        text = f"JobPost: {j['title']} at {j['location']} ({j['jobType']}), Openings: {j['noOfOpenings']}, Deadline: {j['deadline']}, Description: {j.get('description', '')}"
-        docs.append(Document(page_content=text, metadata={"type": "jobpost", "id": str(j["_id"]), "description": j.get('description', '')}))
+        text = (
+            f"JobPost: {j['title']} at {j['location']} ({j['jobType']}). "
+            f"Openings: {j['noOfOpenings']}, Deadline: {j['deadline']}. "
+            f"Description: {j.get('description', 'N/A')}"
+        )
+        docs.append(Document(
+            page_content=text,
+            metadata={"type": "jobpost", "id": str(j["_id"]), "description": j.get('description', '')}
+        ))
 
     return docs
+
 
 def create_vector_store():
     docs = format_documents()

@@ -1,0 +1,236 @@
+(venv) PS D:\3rd yr assignments\gen_ai\project gen_ai> .\venv\Scripts\python.exe main_crew.py
+Successfully configured Google Gemini LLM (gemini-1.5-flash-latest).
+Initializing database from main_direct.py...
+Checking/Initializing database at: D:\3rd yr assignments\gen_ai\project gen_ai\job_portal.db
+Table 'jobs' checked/created.
+Table 'applicants' checked/created.
+Table 'applications' checked/created.
+Database schema initialized/verified successfully.
+LLM Utils is configured to use Google Gemini (check llm_utils.py logs).
+
+============================== STARTING DIRECT WORKFLOW TESTS (using Gemini) ==============================
+
+--- Setting up Test Data ---
+Structuring sample JD...
+
+--- Sending text to Gemini LLM for structuring JD ---
+D:\3rd yr assignments\gen_ai\project gen_ai\venv\Lib\site-packages\langchain_google_genai\chat_models.py:367: UserWarning: Convert_system_message_to_human will be deprecated!
+  warnings.warn("Convert_system_message_to_human will be deprecated!")
+--- Gemini raw response (JD structure): ---
+```json
+{
+  "job_title": "Software Engineer",
+  "required_skills": ["Python", "API Design", "SQL"],
+  "preferred_skills": ["Docker", "AWS"],
+  "required_experience_years": 3,
+  "required_education": "BSc degree",
+  "key_responsibilities": []
+}
+```
+Job 'DEV001' added or updated successfully.
+Job DEV001 added/updated.
+Created/overwritten test resume: direct_test_resume_1.txt
+Applicant 'DIRECT_APP_01' added or updated successfully.
+Applicant DIRECT_APP_01 added.
+Created/overwritten test resume: direct_test_resume_2.txt
+Applicant 'DIRECT_APP_02' added or updated successfully.
+Applicant DIRECT_APP_02 added.
+
+---------- Test Case 1a: Direct Suitability (Alice) ----------
+
+--- Running Direct Suitability Check ---
+Resume Path: direct_test_resume_1.txt
+Job ID: DEV001
+Step 1: Extracting resume text...
+Attempting to extract text from: direct_test_resume_1.txt
+libmagic is unavailable but assists in filetype detection. Please consider installing libmagic for better results.
+Resume text extracted.
+Step 2: Structuring resume text...
+
+--- Sending text to Gemini LLM for structuring resume ---
+D:\3rd yr assignments\gen_ai\project gen_ai\venv\Lib\site-packages\langchain_google_genai\chat_models.py:367: UserWarning: Convert_system_message_to_human will be deprecated!
+  warnings.warn("Convert_system_message_to_human will be deprecated!")
+--- Gemini raw response (resume structure): ---
+```json
+{
+  "name": "Alice Developer",
+  "contact_info": {
+    "email": "alice.dev@email.com",
+    "phone": null
+  },
+  "summary": "Software Engineer with 4 years experience in Python development.",
+  "skills": ["Python", "Flask", "SQL", "API Design", "Git"],
+  "experience": [],
+  "education": [
+    {
+      "degree": "BSc Computer Science",
+      "institution": "State University",
+      "year": 2020
+    }
+  ]
+}
+```
+Resume structured successfully.
+Step 3: Fetching structured job description...
+Structured JD fetched successfully.
+Step 4: Rating resume against job description...
+
+--- Sending structured data to Gemini LLM for rating ---
+D:\3rd yr assignments\gen_ai\project gen_ai\venv\Lib\site-packages\langchain_google_genai\chat_models.py:367: UserWarning: Convert_system_message_to_human will be deprecated!
+  warnings.warn("Convert_system_message_to_human will be deprecated!")
+--- Gemini raw response (Rating): ---
+```json
+{
+  "rating": 85,
+  "summary": "Alice meets all required skills and education criteria, exceeding the minimum experience requirement.  However, she lacks some preferred skills.",
+  "fits": [
+    "Has required skill: Python",
+    "Has required skill: API Design",
+    "Has required skill: SQL",
+    "Meets required education: BSc degree",
+    "Exceeds required experience: 4 years experience vs 3 years required"
+  ],
+  "lacks": [
+    "Missing preferred skill: Docker",
+    "Missing preferred skill: AWS"
+  ]
+}
+```
+Rating successful.
+
+Direct Suitability Check Output (Alice):
+{
+  "rating": 85,
+  "summary": "Alice meets all required skills and education criteria, exceeding the minimum experience requirement.  However, she lacks some preferred skills.",
+  "fits": [
+    "Has required skill: Python",
+    "Has required skill: API Design",
+    "Has required skill: SQL",
+    "Meets required education: BSc degree",
+    "Exceeds required experience: 4 years experience vs 3 years required"
+  ],
+  "lacks": [
+    "Missing preferred skill: Docker",
+    "Missing preferred skill: AWS"
+  ]
+}
+Rating for Applicant DIRECT_APP_01 on Job DEV001 added/updated.
+Rating saved for Alice.
+
+---------- Test Case 1b: Direct Suitability (Bob) ----------
+
+--- Running Direct Suitability Check ---
+Resume Path: direct_test_resume_2.txt
+Job ID: DEV001
+Step 1: Extracting resume text...
+Attempting to extract text from: direct_test_resume_2.txt
+libmagic is unavailable but assists in filetype detection. Please consider installing libmagic for better results.
+Resume text extracted.
+Step 2: Structuring resume text...
+
+--- Sending text to Gemini LLM for structuring resume ---
+D:\3rd yr assignments\gen_ai\project gen_ai\venv\Lib\site-packages\langchain_google_genai\chat_models.py:367: UserWarning: Convert_system_message_to_human will be deprecated!
+  warnings.warn("Convert_system_message_to_human will be deprecated!")
+--- Gemini raw response (resume structure): ---
+```json
+{
+  "name": "Bob Coder",
+  "contact_info": {
+    "email": "bob@coder.net",
+    "phone": null
+  },
+  "summary": "Junior Python Dev. Wants to learn APIs.",
+  "skills": [
+    "Python",
+    "SQL"
+  ],
+  "experience": [],
+  "education": [
+    {
+      "degree": "Associate Degree",
+      "institution": "City College",
+      "year": 2022
+    }
+  ]
+}
+```
+Resume structured successfully.
+Step 3: Fetching structured job description...
+Structured JD fetched successfully.
+Step 4: Rating resume against job description...
+
+--- Sending structured data to Gemini LLM for rating ---
+D:\3rd yr assignments\gen_ai\project gen_ai\venv\Lib\site-packages\langchain_google_genai\chat_models.py:367: UserWarning: Convert_system_message_to_human will be deprecated!
+  warnings.warn("Convert_system_message_to_human will be deprecated!")
+--- Gemini raw response (Rating): ---
+```json
+{
+  "rating": 40,
+  "summary": "The candidate possesses some required skills but lacks significant experience and the required education level.  API design knowledge is also missing.",
+  "fits": [
+    "Has required skill: Python",
+    "Has required skill: SQL"
+  ],
+  "lacks": [
+    "Missing required skill: API Design",
+    "Missing preferred skill: Docker",
+    "Missing preferred skill: AWS",
+    "Lacks required experience of 3 years",
+    "Lacks required education: BSc degree"
+  ]
+}
+```
+Rating successful.
+
+Direct Suitability Check Output (Bob):
+{
+  "rating": 40,
+  "summary": "The candidate possesses some required skills but lacks significant experience and the required education level.  API design knowledge is also missing.",
+  "fits": [
+    "Has required skill: Python",
+    "Has required skill: SQL"
+  ],
+  "lacks": [
+    "Missing required skill: API Design",
+    "Missing preferred skill: Docker",
+    "Missing preferred skill: AWS",
+    "Lacks required experience of 3 years",
+    "Lacks required education: BSc degree"
+  ]
+}
+Rating for Applicant DIRECT_APP_02 on Job DEV001 added/updated.
+Rating saved for Bob.
+
+---------- Test Case 2: Direct Ranking ----------
+
+--- Running Direct Ranking for Job ID: DEV001, Top N: 3 ---
+Ranking complete. Found 2 applicants.
+
+Direct Ranking Output (Top 3):
+[('DIRECT_APP_01', 'Alice Developer', 85), ('DIRECT_APP_02', 'Bob Coder', 40)]
+
+---------- Test Case 3: Direct Summarization (Alice) ----------
+
+--- Running Direct Summarization for Applicant: DIRECT_APP_01, Job: DEV001 ---
+Step 1: Fetching structured job description...
+JD context prepared.
+Step 2: Fetching resume path...
+Resume path found. Extracting text...
+Attempting to extract text from: direct_test_resume_1.txt
+libmagic is unavailable but assists in filetype detection. Please consider installing libmagic for better results.
+Resume text extracted for summary.
+Step 3: Generating contextual summary...
+
+--- Sending text to Gemini LLM for contextual summary ---
+D:\3rd yr assignments\gen_ai\project gen_ai\venv\Lib\site-packages\langchain_google_genai\chat_models.py:367: UserWarning: Convert_system_message_to_human will be deprecated!
+  warnings.warn("Convert_system_message_to_human will be deprecated!")
+--- Gemini raw response (Summary): ---
+Alice Developer possesses four years of Python development experience, exceeding the required three years.  Her skills directly align with the job requirements, including proficiency in Python, API Design, and SQL.  Her BSc in Computer Science from State University fulfills the educational requirement.  The resume highlights relevant experience and skills for the Software Engineer position.
+Summarization successful.
+
+Direct Summarization Output for DIRECT_APP_01:
+{
+  "summary": "Alice Developer possesses four years of Python development experience, exceeding the required three years.  Her skills directly align with the job requirements, including proficiency in Python, API Design, and SQL.  Her BSc in Computer Science from State University fulfills the educational requirement.  The resume highlights relevant experience and skills for the Software Engineer position."
+}
+
+============================== FINISHED DIRECT WORKFLOW TESTS (using Gemini) ==============================

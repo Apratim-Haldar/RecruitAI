@@ -1,0 +1,4 @@
+Bob Coder
+San Francisco, CA | bob@coder.net
+Junior Python Dev. Skills: Python, SQL. Wants to learn APIs.
+Education: Associate Degree, City College (2022)
