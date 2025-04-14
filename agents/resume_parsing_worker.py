@@ -136,7 +136,7 @@ def process_new_application(document: dict):
 
     print(f"\nProcessing Application ID: {app_id} with s3FileKey: {s3_file_key}")
     resume_text = extract_text_from_cv(s3_client, AWS_S3_BUCKET_NAME, s3_file_key)
-
+    #MONGO DB UPDATE
     if resume_text:
         update_result = applications_collection.update_one(
             {"_id": app_id},

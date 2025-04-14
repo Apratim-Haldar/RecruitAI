@@ -11,9 +11,11 @@ import json
 from datetime import datetime, timedelta
 from bson import ObjectId
 from bson.errors import InvalidId
+from typing import Dict, List
+from uuid import uuid4
 
 router = APIRouter()
-
+conversation_sessions: Dict[str, List[str]] = {}
 class Query(BaseModel):
     question: str
 
@@ -164,5 +166,13 @@ async def upload_pdf(file: UploadFile = File(...), user_id: str = None):
 
 @router.post("/ask")
 def ask_api(query: Query):
-    answer = ask_chatbot(query.question)
-    return {"answer": answer}
+    session_id = query.session_id or str(uuid4())
+    context = conversation_sessions.get(session_id, [])
+    
+    # Get answer with context
+    answer = ask_chatbot(query.question, context)
+    
+    # Update context (store last 5 exchanges)
+    context.append(f"Q: {query.question}")
+    context.append(f"A: {answer}")
+    conversation_sessions[session_id] = context[-10:]

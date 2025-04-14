@@ -9,3 +9,4 @@ def load_candidates():
 
 def load_job_posts():
     return list(db["jobposts"].find({}))
+

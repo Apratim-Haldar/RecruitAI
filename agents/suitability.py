@@ -206,7 +206,8 @@ def process_application_for_ai_evaluation(application_doc: dict):
 
     print(f"Performing comprehensive analysis for Application {app_id} against Job Post {job_post_id}...")
     evaluation_result = comprehensive_analyze_candidate(resume_text, job_text)
-
+    
+    #************************************* MONGO DB PUSH *******************************************************
     update_result = applications_collection.update_one(
         {"_id": app_id},
         {"$set": {"aiEvaluation": evaluation_result}}
