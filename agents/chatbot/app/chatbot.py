@@ -5,13 +5,15 @@ from app.vector_store import get_vector_store
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-2.0-flash")
 
+session_memory = {}  # Dict[str, List[Dict[str, str]]]
+
 def ask_gemini(prompt: str) -> str:
     response = model.generate_content(prompt)
     return response.text
 
-def ask_chatbot(query: str):
-    retriever = get_vector_store().as_retriever(search_type="similarity", k=6)
-    context_docs = retriever.invoke(query)  # Updated from get_relevant_documents()
+def ask_chatbot(query: str, session_id: str = "default"):
+    retriever = get_vector_store().as_retriever(search_type="similarity", k=8)
+    context_docs = retriever.invoke(query)
 
     jobposts = [doc.page_content for doc in context_docs if doc.metadata.get("type") == "jobpost"]
     candidates = [doc.page_content for doc in context_docs if doc.metadata.get("type") == "candidate"]
@@ -19,14 +21,15 @@ def ask_chatbot(query: str):
     job_context = "\n\n".join(jobposts)
     candidate_context = "\n\n".join(candidates)
 
+    if session_id not in session_memory:
+        session_memory[session_id] = [] 
+
+    history = "\n\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in session_memory[session_id]])
+
     final_prompt = f"""
 You are an intelligent HR assistant AI helping a recruiter.
 Answer user questions based only on the data below.
 DO NOT mention internal MongoDB IDs. Focus on real job titles, descriptions, or candidate names.
-
-- Respond professionally and clearly.
-- If the question is vague, try your best to infer.
-- If you don't find matching data, say so politely.
 
 ### JOB POST CONTEXT:
 {job_context if job_context else "No relevant job post data."}
@@ -34,10 +37,18 @@ DO NOT mention internal MongoDB IDs. Focus on real job titles, descriptions, or 
 ### CANDIDATE CONTEXT:
 {candidate_context if candidate_context else "No relevant candidate data."}
 
-### QUESTION:
-{query}
+### CHAT HISTORY:
+{history}
 
-### ANSWER:
+### NEW QUESTION:
+User: {query}
+
+Assistant:
 """
+    answer = ask_gemini(final_prompt)
 
-    return ask_gemini(final_prompt)
+    # Update session memory
+    session_memory[session_id].append({"role": "user", "content": query})
+    session_memory[session_id].append({"role": "assistant", "content": answer})
+
+    return answer

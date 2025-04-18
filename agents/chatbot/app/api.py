@@ -18,7 +18,7 @@ router = APIRouter()
 conversation_sessions: Dict[str, List[str]] = {}
 class Query(BaseModel):
     question: str
-
+    session_id: str = None
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-2.0-flash")
@@ -170,9 +170,11 @@ def ask_api(query: Query):
     context = conversation_sessions.get(session_id, [])
     
     # Get answer with context
-    answer = ask_chatbot(query.question, context)
+    answer = ask_chatbot(query.question, session_id)
     
     # Update context (store last 5 exchanges)
     context.append(f"Q: {query.question}")
     context.append(f"A: {answer}")
     conversation_sessions[session_id] = context[-10:]
+
+    return { "answer": answer }

@@ -12,7 +12,7 @@ export default function AIAssistant() {
       content: "Hello! I'm your AI recruitment assistant. I can help you with:\n\n- Screening resumes\n- Writing job descriptions\n- Generating interview questions\n- Evaluating candidate responses"
     }
   ])
-
+  const [sessionId] = useState(() => Date.now().toString(36) + Math.random().toString(36).substr(2))
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!message.trim()) return
@@ -25,7 +25,7 @@ export default function AIAssistant() {
       const response = await fetch('http://127.0.0.1:8080/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: message })
+        body: JSON.stringify({ question: message, session_id: sessionId })
       })
       const data = await response.json()
       const aiMessage = { role: 'assistant', content: data.answer }

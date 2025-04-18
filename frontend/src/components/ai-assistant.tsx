@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -16,6 +16,8 @@ export function AiAssistant() {
   ])
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [sessionId] = useState(() => Date.now().toString(36) + Math.random().toString(36).substr(2))
+
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
@@ -28,7 +30,7 @@ export function AiAssistant() {
       const response = await fetch('http://127.0.0.1:8080/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: inputValue })
+        body: JSON.stringify({ question: inputValue, session_id: sessionId })
       })
 
       const data = await response.json()
